@@ -1,0 +1,258 @@
+<!--
+  Lubn — "Save more than 70% with Lubn" comparison section
+  ────────────────────────────────────────────────────────────────────────
+  Self-contained HTML/Liquid element, same pattern as the pricing block and
+  the "Why Lubn Lockbox?" section. Paste once, no external CSS/JS needed.
+
+  Same design system as "Why Lubn Lockbox?" (colors, type scale, RWD
+  breakpoints), but a simpler 2-column layout (Lubn vs. one competitor) —
+  no tabs needed since there's only one comparison here, not three
+  categories. Prefixed lbns- (Lubn Savings) rather than reusing lbnc- so
+  this can sit on the same page as that section without any class clashes.
+
+  Built as a real <table> (not images) — same SEO rationale as before:
+  every number and claim here ("$9.99/month/unit", "Not needed", etc.) is
+  real crawlable text.
+
+  PRE-APPLIED FIXES (learned from the last section — see its change log):
+  - PageFly's own default table border/background is neutralized on
+    .lbns-scroll and every table element, with the real borders/backgrounds
+    added back via matching-or-higher-specificity !important rules.
+  - No vertical padding on the outer .lbns wrapper — PageFly's own
+    <section> wrapper already provides that, adding our own on top of it
+    doubles the gap versus neighboring sections.
+  - Icon-then-name order inside each column header uses plain block layout
+    (no flexbox "order"), which always renders in HTML source order and
+    can't be flipped by an unrelated PageFly rule.
+-->
+<style>
+.lbns{--ink:#001C39;--mut:#5A7189;--line:#e7e5df;--blue-bg:#eaf2fb;--blue-line:#c9def5;
+  font-family:inherit;color:var(--ink);max-width:1440px;margin:0 auto;box-sizing:border-box}
+.lbns *,.lbns *::before,.lbns *::after{box-sizing:border-box}
+
+.lbns-head{margin:0 0 30px}
+.lbns-head h2{font-size:50px !important;font-weight:700;margin:0 0 12px;letter-spacing:-0.01em}
+.lbns-head p{font-size:18px !important;line-height:1.65;color:var(--ink);margin:0;max-width:720px}
+
+.lbns-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+/* PageFly applies its own default border/background/shadow to <table>
+   elements — without this reset those show through as an unwanted outer
+   frame around the table. */
+.lbns-scroll{border:0 !important;border-radius:0 !important;background:none !important;box-shadow:none !important}
+.lbns-table,.lbns-table thead,.lbns-table tbody,.lbns-table tfoot,.lbns-table tr,.lbns-table th,.lbns-table td{
+  border:0 !important;background:none !important;box-shadow:none !important;border-radius:0 !important;margin:0}
+
+.lbns-table{border-collapse:separate;border-spacing:0;width:100%;min-width:640px;table-layout:fixed}
+.lbns-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.lbns-col-label{width:24%}
+
+.lbns-table th,.lbns-table td{text-align:left;vertical-align:top;padding:18px 20px;border-bottom:1px solid var(--line) !important}
+.lbns-table thead th{padding-top:16px;padding-bottom:20px;text-align:center;border-bottom:0 !important}
+.lbns-table tbody th{font-size:14.5px;font-weight:400;color:var(--mut);padding-left:0;text-align:left}
+.lbns-table tbody tr:last-child td,.lbns-table tbody tr:last-child th{border-bottom:0 !important}
+
+.lbns-pcard{display:block !important;text-align:center}
+.lbns-icon{display:flex !important;align-items:center;justify-content:center;gap:14px;height:56px;margin:12px auto 0 !important}
+.lbns-icon svg{height:100%;width:auto;display:block}
+.lbns-pname{display:block !important;font-size:16px;font-weight:600}
+
+.lbns-table td b{display:block;font-size:15.5px;font-weight:600;margin:0 0 4px;color:var(--ink) !important}
+.lbns-table td b .lbns-cents,.lbns-table td b .lbns-unit{display:inline !important;color:inherit !important;font-weight:inherit !important;line-height:inherit !important}
+.lbns-cents{font-size:0.62em;vertical-align:super}
+.lbns-unit{font-size:0.72em;font-weight:600}
+.lbns-table td span{display:block;font-size:13.5px;line-height:1.6;color:var(--mut);font-weight:400}
+.lbns-cell-icon{display:none !important}
+.lbns-price-pname{display:none !important}
+
+/* Highlighted "Lubn AI Lockbox & PMS" column — light blue card running the
+   full height of the table, rounded only at the very top and bottom. */
+.lbns-table th.lbns-hl,.lbns-table td.lbns-hl{background:var(--blue-bg) !important}
+.lbns-table thead th.lbns-hl{border-radius:16px 16px 0 0 !important}
+.lbns-table tbody tr:last-child .lbns-hl{border-radius:0 0 16px 16px !important}
+.lbns-table tbody .lbns-hl{border-bottom:1px solid var(--blue-line) !important}
+.lbns-table tbody tr:last-child .lbns-hl{border-bottom:0 !important}
+
+/* Same breakpoints as "Why Lubn Lockbox?": desktop / <1200 / <1024 / <768.
+   <1024 and <768 share the same values here, so they're combined into one
+   max-width:1024px rule. */
+@media (max-width:1200px){
+  .lbns-head h2{font-size:36px !important}
+}
+@media (max-width:1024px){
+  .lbns-head h2{font-size:24px !important}
+  .lbns-head p{font-size:16px !important}
+}
+@media (max-width:749px){
+  /* Card-stacked mobile layout, replacing horizontal scroll — same
+     technique as "Why Lubn Lockbox?": each feature row becomes its own
+     card, the two products' answers stack inside it, and each answer
+     shows its own small icon (reused from a single sprite definition,
+     hidden on desktop) instead of a repeated text label. See that
+     section's code comments for the fuller rationale and the CSS-
+     specificity pitfalls already solved here up front. */
+  .lbns-scroll{overflow-x:visible !important}
+  .lbns-table{min-width:0 !important;width:100% !important;table-layout:auto !important}
+  .lbns-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .lbns-table,.lbns-table tbody,.lbns-table tr,.lbns-table th{display:block !important;width:100% !important}
+  .lbns-table td{display:flex !important;width:100% !important;gap:14px;align-items:center}
+
+  .lbns-table tbody tr{border:1px solid var(--line) !important;border-radius:14px !important;padding:16px !important;margin:0 0 14px !important}
+  .lbns-table tbody tr:last-child{margin-bottom:0 !important}
+
+  .lbns-table tbody th{font-size:16px;font-weight:600;color:var(--ink);margin:0 0 12px}
+  .lbns-table th,.lbns-table td{padding:14px !important;border-bottom:1px solid var(--line) !important}
+  .lbns-table tbody th{padding:0 0 12px !important}
+  .lbns-table tbody tr:last-child td,.lbns-table tbody tr:last-child th{border-bottom:0 !important}
+  .lbns-table tbody td:last-child{border-bottom:0 !important;padding-bottom:0 !important}
+
+  .lbns-cell-icon{display:flex !important;align-items:center;justify-content:center;width:44px !important;height:44px !important;flex:0 0 44px !important}
+  .lbns-cell-icon svg{width:100%;height:100%;display:block}
+  .lbns-cell-text{display:block !important;flex:1 1 0% !important;min-width:0 !important;width:auto !important;overflow-wrap:break-word !important;word-break:break-word !important}
+
+  .lbns-table th.lbns-hl,.lbns-table td.lbns-hl{border-radius:12px !important;padding:14px !important;margin:0 0 12px !important}
+  .lbns-table tbody tr:last-child .lbns-hl{border-radius:12px !important}
+  .lbns-table tbody .lbns-hl{border-bottom:0 !important}
+
+  /* "Lockbox Retail Price" card only — price on top, product name below
+     it, then the full illustrated icon underneath, centered. Distinct
+     from every other row, which uses the icon-beside-text layout above.
+     Scoped to tr.lbns-price-row so it can't affect any other card. */
+  .lbns-table tbody tr.lbns-price-row td{display:block !important;text-align:center}
+  .lbns-table tbody tr.lbns-price-row td b{font-size:20px !important;margin:0 !important}
+  .lbns-price-pname{display:block !important;font-size:14px;color:var(--mut);margin:4px 0 0}
+  .lbns-price-row .lbns-price-icon{display:block !important;width:auto !important;height:auto !important;flex:none !important;margin:18px auto 0 !important}
+  .lbns-price-row .lbns-price-icon svg{height:64px;width:auto;display:block;margin:0 auto}
+}
+</style>
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" xmlns="http://www.w3.org/2000/svg"><symbol id="lbns-ic-lubn" viewbox="0 0 205 94"><path d="M60.1,27h0s0-2.8,0-2.8v-7.9c0-7.2-5.9-13.1-13.1-13.1h-.2c-7.2,0-13,5.8-13,13v10.8h-.8c-1.1,0-2,.9-2,2l-.7,60c0,.5.2,1,.6,1.4s.9.6,1.4.6h29c.5,0,1-.2,1.4-.6.4-.4.6-.9.6-1.4l-1.2-60c0-1-.8-1.9-1.8-1.9ZM34.7,16.2c0-6.6,5.4-12,12-12h.2c6.7,0,12.1,5.4,12.1,12.1v10.5s0,.2,0,.2h-5.9v-11.5c0-3.3-2.7-6-6.1-6h-.8c-3.4,0-6.1,2.7-6.1,6v11.5h-5.6v-10.8ZM41.2,27v-11.5c0-2.8,2.3-5,5.1-5h.8c2.8,0,5.1,2.3,5.1,5v11.5h-10.9ZM61.9,89.7c-.2.2-.4.3-.7.3h-29c-.3,0-.5-.1-.7-.3s-.3-.4-.3-.7l.7-60c0-.5.5-1,1-1h1.3s0,0,0,0h6.6s0,0,0,0h11.9s0,0,0,0h6.9s0,0,0,0h.3c.5,0,1,.4,1,1l1.2,60c0,.3,0,.5-.3.7Z" fill="#001c39"></path><path d="M46.5,55.5c-3.2,0-5.9,2.6-5.9,5.9s2.6,5.9,5.9,5.9,5.9-2.6,5.9-5.9-2.6-5.9-5.9-5.9ZM46.5,66.2c-2.7,0-4.9-2.2-4.9-4.9s2.2-4.9,4.9-4.9,4.9,2.2,4.9,4.9-2.2,4.9-4.9,4.9Z" fill="#001c39"></path><path d="M46.5,60.8c.1,0,.3-.1.3-.3v-1.7c0-.1-.1-.3-.3-.3s-.3.1-.3.3v1.7c0,.1.1.3.3.3Z" fill="#001c39"></path><path d="M47.9,59.4c-.2,0-.4,0-.5.1,0,.1,0,.3.1.4.6.3.9.9.9,1.5,0,1-.8,1.8-1.9,1.8s-1.9-.8-1.9-1.8.3-1.1.8-1.5c.2,0,.2-.3,0-.4-.1-.1-.3-.2-.5,0-.7.4-1.1,1.2-1.1,2,0,1.3,1.1,2.4,2.5,2.4h0c1.4,0,2.5-1.1,2.5-2.4s-.4-1.6-1.2-2Z" fill="#001c39"></path><path d="M43.2,44.7h6.9c1.1,0,2-.9,2-2v-6.9c0-1.1-.9-2-2-2h-6.9c-1.1,0-2,.9-2,2v6.9c0,1.1.9,2,2,2ZM42.2,35.8c0-.6.4-1,1-1h6.9c.6,0,1,.4,1,1v6.9c0,.6-.4,1-1,1h-6.9c-.6,0-1-.4-1-1v-6.9Z" fill="#001c39"></path><path d="M46.5,42.6c1.8,0,3.2-1.4,3.2-3.2s-1.4-3.2-3.2-3.2-3.2,1.4-3.2,3.2,1.4,3.2,3.2,3.2ZM46.5,37.2c1.2,0,2.2,1,2.2,2.2s-1,2.2-2.2,2.2-2.2-1-2.2-2.2,1-2.2,2.2-2.2Z" fill="#001c39"></path><path d="M194.8,12.6h-73.6c-4,0-7.2,3-7.2,6.8v47.1c0,3.7,3.2,6.8,7.2,6.8h27.5c0,6.1-2.1,12.9-5,16.7h-6.2c-.3,0-.5.2-.5.5s.2.5.5.5h41.1c.3,0,.5-.2.5-.5s-.2-.5-.5-.5h-6.2c-2.9-3.8-5-10.6-5-16.7h27.5c4,0,7.2-3,7.2-6.8V19.3c0-3.7-3.2-6.8-7.2-6.8ZM115,19.3c0-3.2,2.8-5.8,6.2-5.8h73.6c3.4,0,6.2,2.6,6.2,5.8v39.7h-85.9V19.3ZM171.1,89.9h-26.2c2.8-4.1,4.7-10.7,4.8-16.7h16.6c0,6,2,12.7,4.8,16.7ZM201,66.4c0,3.2-2.8,5.8-6.2,5.8h-73.6c-3.4,0-6.2-2.6-6.2-5.8v-6.4h85.9v6.4Z" fill="#001c39"></path><path d="M98.5,48.6l1.3,1.3h-6.9c-.7,0-1.3-.3-1.8-.7-.5-.5-.7-1.1-.7-1.8h-.8c0,.9.4,1.8,1,2.4.6.6,1.5,1,2.4,1h6.9l-1.3,1.3.6.6,2.3-2.3-2.3-2.3-.6.6Z" fill="#001c39"></path><path d="M92,45.5l-1.3-1.3h6.9c.7,0,1.3.3,1.8.7.5.5.7,1.1.7,1.8h.8c0-.9-.4-1.8-1-2.4-.6-.6-1.5-1-2.4-1h-6.9l1.3-1.3-.6-.6-2.3,2.3,2.3,2.3.6-.6Z" fill="#001c39"></path></symbol><symbol id="lbns-ic-other" viewbox="0 0 354 94"><rect fill="none" height="94" width="94" x="260" y="0"></rect><g>
+<path d="M61.3,29.8h-2.5v-1.8s0-8.2,0-8.2c0-7.6-5.9-13.7-13.3-13.7h-.3c-7.3,0-13.2,6.1-13.2,13.6v10.1h-2.5c-1.7,0-3,1.3-3,3v51.6c0,1.7,1.3,3,3,3h31.8c1.7,0,3-1.3,3-3v-51.6c0-1.7-1.3-3-3-3ZM33,19.7c0-7,5.5-12.6,12.2-12.6h.3c6.8,0,12.3,5.7,12.3,12.7v10s-6,0-6,0v-10.3c0-3.5-2.7-6.5-6.2-6.5h-.8c-3.4,0-6.2,2.9-6.2,6.5v9h0v1.3h-5.7v-10.1ZM39.7,28v-8.6c0-3,2.3-5.5,5.2-5.5h.8c2.8,0,5.2,2.4,5.2,5.5v10.3h-11.1v-1.8h0ZM63.3,84.4c0,1.1-.9,2-2,2h-31.8c-1.1,0-2-.9-2-2v-51.6c0-1.1.9-2,2-2h31.8c1.1,0,2,.9,2,2v51.6Z" fill="#001c39"></path>
+<path d="M58.5,34h-26c-1.1,0-2,.9-2,2v46c0,1.1.9,2,2,2h26c1.1,0,2-.9,2-2v-46c0-1.1-.9-2-2-2ZM59.5,82c0,.6-.4,1-1,1h-26c-.6,0-1-.4-1-1v-46c0-.6.4-1,1-1h26c.6,0,1,.4,1,1v46Z" fill="#001c39"></path>
+<path d="M55.2,68.1h-.6l-.2,1.1h-.4l.2-1.1h-.6l-.2,1.1h-.6v.5h.6v.6h-.6v.5h.4l-.2,1.1h0c0,.1.7.1.7.1l.2-1.3h.4l-.2,1.1h0c0,.1.7.1.7.1l.2-1.3h.6v-.5h-.6v-.6h.6v-.5h-.4l.2-1.1ZM54.3,69.8v.6h-.5v-.6h.5Z" fill="#001c39"></path>
+<path d="M46.5,69.2c0,0,0-.2,0-.2v-.2c-.1-.1-.2-.3-.3-.4-.1-.1-.2-.2-.4-.3-.2,0-.3,0-.5,0s-.4,0-.6,0c-.2,0-.3.1-.4.3-.1.1-.2.2-.2.4,0,0,0,.1,0,.2v.2c0,.2,0,.3,0,.5v1c0,.2,0,.3,0,.5,0,.2,0,.3.1.4,0,.1.1.3.3.4.1.1.2.2.4.3.2,0,.3,0,.6,0s.4,0,.5,0h.1c.1-.1.2-.2.3-.3h0c0-.2.1-.3.2-.4,0-.1.1-.3.1-.4v-.2c0,0,0-.1,0-.2v-1c0,0,0-.2,0-.2v-.2ZM45.8,69.6v1c0,.1,0,.2,0,.3,0,0,0,.2,0,.3,0,0,0,.1-.2.2,0,0-.2,0-.3,0s-.2,0-.3,0c0,0,0,0-.1-.1h0c0-.1,0-.2,0-.3,0-.1,0-.2,0-.3v-1c0-.1,0-.2,0-.3,0-.1,0-.2,0-.3,0,0,0-.1.2-.2,0,0,.2,0,.3,0s.2,0,.3,0c0,0,.1.1.2.2h0c0,.2,0,.2,0,.3,0,.1,0,.2,0,.3Z" fill="#001c39"></path>
+<polygon fill="#001c39" points="37.5 69.3 37 69.7 37 68.9 36.4 68.9 36.5 69.6 36 69.2 35.7 69.8 36.2 70.1 35.6 70.4 35.9 71 36.5 70.6 36.4 71.2 36.4 71.4 37 71.4 37 70.7 37.5 71.1 37.8 70.6 37.8 70.5 37.2 70.2 37.8 69.9 37.5 69.3"></polygon>
+<path d="M55.2,59.2c-.2-.1-.4-.2-.8-.2s-.5,0-.7.1h0c-.2.2-.3.3-.4.5,0,.2-.1.4-.1.7s0,.5.1.6h0c0,.2.2.4.4.5h0s0,0,0,0c.2.1.4.2.7.2s.2,0,.2,0l-.7,1.3h0c0,.1.9.1.9.1l.6-1.2c.1-.2.2-.4.2-.6,0-.2.1-.3.1-.5v-.2c0,0,0-.2,0-.3,0-.2,0-.5-.1-.7,0-.2-.2-.4-.4-.5ZM54,60c0,0,0-.1.1-.2h0c0,0,.2,0,.3,0s.2,0,.3,0,.1.1.2.2h0c0,.1,0,.2,0,.3s0,.2,0,.3c0,0,0,.2-.2.2,0,0-.2,0-.3,0s-.2,0-.3,0h0c0,0-.1-.2-.1-.3,0,0,0-.2,0-.3s0-.2,0-.3Z" fill="#001c39"></path>
+<path d="M46.8,61.4c0-.1-.2-.3-.3-.3,0,0-.1,0-.2-.1,0,0,.1,0,.2-.1h0c0-.1.1-.2.2-.3h0s0,0,0,0c0-.1.1-.3.1-.5s0-.3,0-.4h0,0c0-.2-.2-.4-.4-.5-.2-.1-.4-.2-.7-.2s-.4,0-.6,0h-.1c-.2.2-.3.3-.4.5,0,.2-.1.3-.1.5s0,.3.1.5h0c0,.1.2.3.3.3h.1c-.1.2-.3.3-.4.4-.2.2-.2.4-.2.7s0,.4.1.6h0c0,.2.2.4.4.4.2.1.4.2.8.2s.6,0,.8-.2c.2-.1.3-.3.4-.4,0-.2.1-.4.1-.6s0-.4-.1-.5h0ZM45,62c0-.1,0-.2.1-.4,0,0,.2-.2.4-.3,0,0,.2,0,.2.1h0c.1,0,.2.1.2.2h0c0,.1,0,.2,0,.3s0,.1,0,.1h0c0,.2,0,.2,0,.3h0c0,0-.2.1-.3.1s-.3,0-.4,0c0,0-.1,0-.1-.1h0c0-.1,0-.2,0-.3ZM46,60.3s0,0,0,.1h-.1c0,.1,0,.2-.2.2,0,0-.1,0-.2,0h0s0,0-.1-.1h-.1c0-.2,0-.2,0-.3s0-.1,0-.2c0,0,0,0,.1-.1h0c0,0,.2,0,.3,0,.2,0,.3,0,.3,0h0c0,0,0,0,.1.1h0c0,0,0,.1,0,.2s0,.2,0,.2Z" fill="#001c39"></path>
+<polygon fill="#001c39" points="35.5 59.8 37 59.8 35.9 63 35.8 63.1 36.7 63.1 37.9 59.7 37.9 59.1 35.5 59.1 35.5 59.8"></polygon>
+<path d="M55.3,51.6h0s0,0,0,0c-.2-.1-.4-.2-.7-.2s-.2,0-.2,0l.7-1.3h0c0-.1-.9-.1-.9-.1l-.6,1.2c-.1.2-.2.4-.3.6h0c0,.1,0,.2,0,.3v.2c0,.2-.1.3-.1.5s0,.5.1.7h0c0,.3.2.4.3.5h0c.2.1.4.2.8.2s.6,0,.8-.2c.2-.1.3-.3.4-.5,0-.2.1-.4.1-.7s0-.5-.1-.7c0-.2-.2-.4-.4-.5ZM54.1,53.1c0-.1,0-.2,0-.3s0-.2,0-.3h0c0,0,0-.2.1-.2h0c0,0,.2,0,.3,0s.3,0,.3,0c0,0,.1.1.1.2h0c0,.1,0,.2,0,.3s0,.2,0,.3h0c0,0,0,.1,0,.2h0c0,0-.2.1-.3.1s-.2,0-.3,0c0,0,0,0-.1-.2h0Z" fill="#001c39"></path>
+<path d="M46.4,51.6c-.2-.1-.4-.2-.6-.2s-.3,0-.5,0c0,0,0,0,0,0v-.7h1.5v-.8h-2.1l-.2,2.2.6.3h0c0-.1.2-.2.3-.2,0,0,.2,0,.3,0s.2,0,.3,0h0c0,0,0,.1.1.2,0,0,0,.2,0,.4s0,.4-.2.5c-.1,0-.2.1-.4.1s-.2,0-.3,0c0,0-.1,0-.1,0h-.1c0-.1-.2-.2-.3-.2h-.1c0,0-.2.5-.2.5h0c0,0,0,.1,0,.1,0,0,.2.1.3.2.1,0,.3.1.4.1.2,0,.3,0,.5,0,.3,0,.5,0,.7-.2.2-.1.4-.3.5-.5.1-.2.2-.4.2-.7s0-.5-.1-.7c0-.2-.2-.4-.4-.5Z" fill="#001c39"></path>
+<polygon fill="#001c39" points="37.6 51.6 36.9 51.6 36.9 52.5 36.3 52.5 37.3 50.1 37.4 50 36.5 50 35.4 52.6 35.4 53.3 36.9 53.3 36.9 54.1 37.6 54.1 37.6 53.3 38.2 53.3 38.2 52.5 37.6 52.5 37.6 51.6"></polygon>
+<path d="M54.1,44.2c0,0,0-.2,0-.4h0c0,0-.8,0-.8,0h0c0,.4,0,.6.1.8,0,.2.2.4.4.4.2,0,.4.1.7.1s.5,0,.7-.2c.2-.1.3-.3.4-.5h0c0-.2.1-.4.1-.7s0-.3,0-.4h0c0-.2,0-.3-.2-.4h0c0-.1,0-.1,0-.1,0,0,0,0,0,0h0s0,0,0,0c0,0,.1-.2.2-.3,0-.1,0-.3,0-.4,0-.2,0-.5-.2-.6,0-.1-.2-.2-.3-.3h-.1c-.2-.2-.4-.2-.6-.2s-.5,0-.6.1h0c-.2,0-.4.2-.5.4-.1.2-.2.5-.2.8h0c0,.1.8.1.8.1h0c0-.3,0-.4,0-.5h0c0,0,0-.1.1-.1h0c0,0,.2,0,.3,0s.3,0,.4,0h0c0,0,0,.2,0,.3s0,.2,0,.2c0,0,0,0,0,.1,0,0,0,0,0,0h-.1c0,0-.2,0-.4,0h0v.7h0c.2,0,.3,0,.4,0h0c0,0,.1,0,.2.1h0c0,0,0,.2,0,.4s0,.3-.1.4h0c0,.1-.2.1-.4.1s-.2,0-.3,0h0c0,0-.1,0-.2-.2Z" fill="#001c39"></path>
+<path d="M45.1,42.3c0-.2,0-.3,0-.4h0c0-.1,0-.2.1-.2,0,0,.2,0,.3,0s.3,0,.3.1h0c0,0,.1.2.1.4s0,.1,0,.1h0c0,.2,0,.3-.1.4,0,0,0,0-.1.1l-.2.2-1.2,1.3h0s0,.7,0,.7h2.4v-.7h-1.4l.7-.7h0c.1-.2.3-.3.3-.4.1-.1.2-.3.2-.5h0c0-.2,0-.4,0-.5,0-.2,0-.4-.1-.6,0-.2-.2-.3-.4-.5-.2-.1-.4-.2-.7-.2-.4,0-.8.1-1,.3-.2.2-.3.6-.3,1h0c0,0,.8,0,.8,0h0Z" fill="#001c39"></path>
+<polygon fill="#001c39" points="36.5 41.8 36.5 44.3 35.5 44.3 35.5 45 38.2 45 38.2 44.3 37.3 44.3 37.3 41 36.8 41 36.8 41 35.6 41.1 35.5 41.2 35.6 41.9 36.5 41.8"></polygon>
+<path d="M126,58.5c-.6,0-1,.5-1,1s.5,1,1,1,1-.5,1-1-.5-1-1-1Z" fill="#001c39"></path>
+<path d="M127,40.5h-5v-5h2v-6h-5v6h2v5h-5c-2.8,0-5,2.2-5,5v14c0,2.8,2.2,5,5,5h11c2.8,0,5-2.2,5-5v-14c0-2.8-2.2-5-5-5ZM120,34.5v-4h3v4h-3ZM131,59.5c0,2.2-1.8,4-4,4h-11c-2.2,0-4-1.8-4-4v-14c0-2.2,1.8-4,4-4h11c2.2,0,4,1.8,4,4v14Z" fill="#001c39"></path>
+<path d="M219.5,59.8h-7.5v-16.5c0-.3-.2-.5-.5-.5s-.5.2-.5.5v16.5h-28v-16.5c0-.3-.2-.5-.5-.5s-.5.2-.5.5v16.5h-7c-2.5,0-4.5,2-4.5,4.5v12.1c0,.3.2.5.5.5h52.5c.3,0,.5-.2.5-.5v-12.1c0-2.5-2-4.5-4.5-4.5ZM223,76h-51.5v-11.6c0-2,1.6-3.5,3.5-3.5h44.4c2,0,3.5,1.6,3.5,3.5v11.6Z" fill="#001c39"></path>
+<path d="M215.4,67.9h-8.1c-.3,0-.5.2-.5.5s.2.5.5.5h8.1c.3,0,.5-.2.5-.5s-.2-.5-.5-.5Z" fill="#001c39"></path>
+<path d="M199.8,67.4c-.6,0-1,.5-1,1s.5,1,1,1,1-.5,1-1-.5-1-1-1Z" fill="#001c39"></path>
+<path d="M195.7,67.4c-.6,0-1,.5-1,1s.5,1,1,1,1-.5,1-1-.5-1-1-1Z" fill="#001c39"></path>
+<path d="M191.6,67.4c-.6,0-1,.5-1,1s.5,1,1,1,1-.5,1-1-.5-1-1-1Z" fill="#001c39"></path>
+<path d="M202.9,33.5c.1,0,.3,0,.4-.2.2-.2.2-.5,0-.7-1.7-1.5-3.8-2.3-6-2.3s-4.3.8-6,2.3c-.2.2-.2.5,0,.7.2.2.5.2.7,0,1.5-1.3,3.4-2,5.3-2s3.9.7,5.3,2c0,0,.2.1.3.1Z" fill="#001c39"></path>
+<path d="M207.4,29c.1,0,.3,0,.4-.2.2-.2.2-.5,0-.7-2.9-2.7-6.6-4.2-10.5-4.2s-7.7,1.5-10.5,4.2c-.2.2-.2.5,0,.7.2.2.5.2.7,0,2.7-2.5,6.2-3.9,9.9-3.9s7.2,1.4,9.9,3.9c0,0,.2.1.3.1Z" fill="#001c39"></path>
+<path d="M183.3,23.9c3.8-3.4,8.8-5.3,13.9-5.3s10.1,1.9,13.9,5.3c0,0,.2.1.3.1s.3,0,.4-.2c.2-.2.2-.5,0-.7-4-3.6-9.2-5.6-14.6-5.6s-10.5,2-14.6,5.6c-.2.2-.2.5,0,.7.2.2.5.2.7,0Z" fill="#001c39"></path>
+<path d="M197.5,36.6c-.1,0-.3,0-.4,0-.1,0-.3.1-.4.2-.1.1-.2.2-.2.4,0,.1,0,.3,0,.4,0,.1.2.3.3.3.1,0,.3.1.4.1s.4,0,.5-.2c.1-.1.2-.3.2-.5s0-.3-.1-.4c0-.1-.2-.2-.3-.3Z" fill="#001c39"></path>
+<path d="M246.2,48.6l1.3,1.3h-6.9c-.7,0-1.3-.3-1.8-.7-.5-.5-.7-1.1-.7-1.8h-.8c0,.9.4,1.8,1,2.4.6.6,1.5,1,2.4,1h6.9l-1.3,1.3.6.6,2.3-2.3-2.3-2.3-.6.6Z" fill="#001c39"></path>
+<path d="M239.8,45.5l-1.3-1.3h6.9c.7,0,1.3.3,1.8.7.5.5.7,1.1.7,1.8h.8c0-.9-.4-1.8-1-2.4-.6-.6-1.5-1-2.4-1h-6.9l1.3-1.3-.6-.6-2.3,2.3,2.3,2.3.6-.6Z" fill="#001c39"></path>
+<path d="M343.8,12.6h-73.6c-4,0-7.2,3-7.2,6.8v47.1c0,3.7,3.2,6.8,7.2,6.8h27.5c0,6.1-2.1,12.9-5,16.7h-6.2c-.3,0-.5.2-.5.5s.2.5.5.5h41.1c.3,0,.5-.2.5-.5s-.2-.5-.5-.5h-6.2c-2.9-3.8-4.9-10.6-5-16.7h27.5c4,0,7.2-3,7.2-6.8V19.3c0-3.7-3.2-6.8-7.2-6.8ZM270.2,13.6h73.6c3.4,0,6.2,2.6,6.2,5.8v39.7h-85.9V19.3c0-3.2,2.8-5.8,6.2-5.8ZM320.1,89.9h-26.2c2.8-4.1,4.7-10.7,4.8-16.7h16.6c0,6,2,12.7,4.8,16.7ZM343.8,72.2h-73.6c-3.4,0-6.2-2.6-6.2-5.8v-6.4h85.9v6.4c0,3.2-2.8,5.8-6.2,5.8Z" fill="#001c39"></path>
+<path d="M83.8,45.5l-1.3-1.3h6.9c.7,0,1.3.3,1.8.7.5.5.7,1.1.7,1.8h.8c0-.9-.4-1.8-1-2.4s-1.5-1-2.4-1h-6.9l1.3-1.3-.6-.6-2.3,2.3,2.3,2.3.6-.6Z" fill="#001c39"></path>
+<path d="M90.2,48.6l1.3,1.3h-6.9c-.7,0-1.3-.3-1.8-.7-.5-.5-.7-1.1-.7-1.8h-.8c0,.9.4,1.8,1,2.4.6.6,1.5,1,2.4,1h6.9l-1.3,1.3.6.6,2.3-2.3-2.3-2.3-.6.6Z" fill="#001c39"></path>
+<path d="M159.2,48.6l1.3,1.3h-6.9c-.7,0-1.3-.3-1.8-.7-.5-.5-.7-1.1-.7-1.8h-.8c0,.9.4,1.8,1,2.4.6.6,1.5,1,2.4,1h6.9l-1.3,1.3.6.6,2.3-2.3-2.3-2.3-.6.6Z" fill="#001c39"></path>
+<path d="M152.8,45.5l-1.3-1.3h6.9c.7,0,1.3.3,1.8.7.5.5.7,1.1.7,1.8h.8c0-.9-.4-1.8-1-2.4-.6-.6-1.5-1-2.4-1h-6.9l1.3-1.3-.6-.6-2.3,2.3,2.3,2.3.6-.6Z" fill="#001c39"></path>
+</g></symbol><symbol id="lbns-ic-lockbox-simple" viewbox="0 0 70 70"><path d="M46.7,21.6c0-.9-.8-1.6-1.6-1.6h-.3v-2s0-5.9,0-5.9c0-5.4-4.4-9.8-9.8-9.8h-.2c-5.4,0-9.8,4.4-9.8,9.8v7.9h-2.1c-.9,0-1.6.7-1.6,1.6l-.5,44.5c0,.4.2.9.5,1.2.3.3.7.5,1.2.5h23.7c.4,0,.9-.2,1.2-.5.3-.3.5-.7.5-1.2l-1-44.5ZM30.7,20v-2h0v-6.4c0-2,1.7-3.7,3.7-3.7h.6c2.1,0,3.7,1.7,3.7,3.7v8.5h-8.1ZM25.9,12.1c0-4.9,4-8.9,8.9-8.9h.2c5,0,9,4,9,9v7.9s-4.3,0-4.3,0v-8.5c0-2.5-2-4.5-4.6-4.5h-.6c-2.5,0-4.6,2-4.6,4.5v8.5h-4.1v-7.9ZM46.7,66.8c-.2.2-.4.2-.6.2h-23.7c-.2,0-.4,0-.6-.2-.2-.2-.2-.4-.2-.6l.5-44.5c0-.4.4-.8.8-.8h22.2c.4,0,.8.4.8.8l1,44.5c0,.2,0,.4-.2.6Z" fill="#001c39"></path><path d="M34.7,41.3c-2.4,0-4.4,2-4.4,4.4s2,4.4,4.4,4.4,4.4-2,4.4-4.4-2-4.4-4.4-4.4ZM34.7,49.3c-2,0-3.6-1.6-3.6-3.6s1.6-3.6,3.6-3.6,3.6,1.6,3.6,3.6-1.6,3.6-3.6,3.6Z" fill="#001c39"></path><path d="M34.7,45.2c.1,0,.2,0,.2-.2v-1.3c0-.1,0-.2-.2-.2s-.2,0-.2.2v1.3c0,.1,0,.2.2.2Z" fill="#001c39"></path><path d="M35.7,44.2c-.1,0-.3,0-.3,0,0,.1,0,.3,0,.3.4.2.7.7.7,1.1,0,.7-.6,1.3-1.4,1.3s-1.4-.6-1.4-1.3.2-.8.6-1.1c.1,0,.1-.2,0-.3,0-.1-.2-.1-.3,0-.5.3-.8.9-.8,1.5,0,1,.8,1.8,1.9,1.8h0c1,0,1.9-.8,1.9-1.8s-.3-1.2-.9-1.5Z" fill="#001c39"></path><path d="M32.3,33.3h4.9c.9,0,1.6-.7,1.6-1.6v-4.9c0-.9-.7-1.6-1.6-1.6h-4.9c-.9,0-1.6.7-1.6,1.6v4.9c0,.9.7,1.6,1.6,1.6ZM31.5,26.8c0-.5.4-.8.8-.8h4.9c.5,0,.8.4.8.8v4.9c0,.5-.4.8-.8.8h-4.9c-.5,0-.8-.4-.8-.8v-4.9Z" fill="#001c39"></path><path d="M34.7,31.7c1.3,0,2.4-1.1,2.4-2.4s-1.1-2.4-2.4-2.4-2.4,1.1-2.4,2.4,1.1,2.4,2.4,2.4ZM34.7,27.8c.9,0,1.6.7,1.6,1.6s-.7,1.6-1.6,1.6-1.6-.7-1.6-1.6.7-1.6,1.6-1.6Z" fill="#001c39"></path></symbol><symbol id="lbns-ic-bluetooth-simple" viewbox="0 0 70 70"><path d="M28.8,21.2h0v-6.7c0-2.6,2-4.8,4.6-4.8h.6c2.6,0,4.6,2.2,4.6,4.8v7.7h4.5v-1.3s0-6.1,0-6.1c0-5.2-4.1-9.5-9.2-9.5h-.2c-5,0-9.1,4.2-9.1,9.4v7.5h4.2v-1Z" fill="none"></path><path d="M37.8,14.5c0-2.3-1.7-4.1-3.8-4.1h-.6c-2.1,0-3.8,1.8-3.8,4.1v6.4h0v1.3h8.3v-7.7Z" fill="none"></path><g>
+<path d="M45.7,22.2h-1.9v-1.3s0-6.1,0-6.1c0-5.6-4.4-10.2-9.9-10.2h-.2c-5.4,0-9.8,4.6-9.8,10.2v7.5h-1.9c-1.2,0-2.2,1-2.2,2.2v38.4c0,1.2,1,2.2,2.2,2.2h23.7c1.2,0,2.2-1,2.2-2.2V24.4c0-1.2-1-2.2-2.2-2.2ZM47.2,62.8c0,.8-.7,1.5-1.5,1.5h-23.7c-.8,0-1.5-.7-1.5-1.5V24.4c0-.8.7-1.5,1.5-1.5h23.7c.8,0,1.5.7,1.5,1.5v38.4ZM29.6,20.9v-6.4c0-2.3,1.7-4.1,3.8-4.1h.6c2.1,0,3.8,1.8,3.8,4.1v7.7h-8.3v-1.3h0ZM24.6,14.7c0-5.2,4.1-9.4,9.1-9.4h.2c5,0,9.2,4.2,9.2,9.5v7.4s-4.5,0-4.5,0v-7.7c0-2.6-2-4.8-4.6-4.8h-.6c-2.6,0-4.6,2.2-4.6,4.8v6.7h0v1h-4.2v-7.5Z" fill="#001c39"></path>
+<path d="M43,25h-18c-.8,0-1.5.7-1.5,1.5v34c0,.8.7,1.5,1.5,1.5h18c.8,0,1.5-.7,1.5-1.5V26.5c0-.8-.7-1.5-1.5-1.5ZM43.8,60.5c0,.4-.3.7-.7.7h-18c-.4,0-.7-.3-.7-.7V26.5c0-.4.3-.7.7-.7h18c.4,0,.7.3.7.7v34Z" fill="#001c39"></path>
+<path d="M41.1,50.8h0c0,0-.5,0-.5,0v.8h-.5v-.8c.1,0-.3,0-.3,0v.8h-.6v.4h.4v.4h-.5v.4h.3v.9c-.1,0,.3,0,.3,0v-.9h.5v.9c-.1,0,.3,0,.3,0v-.9h.6v-.4h-.4v-.4h.5v-.4h-.3v-.8ZM40.4,52v.4h-.4v-.4h.4Z" fill="#001c39"></path>
+<path d="M34.6,51.5c0,0,0-.1,0-.2v-.2c0-.1-.2-.2-.2-.3,0,0-.2-.1-.3-.2-.1,0-.3,0-.4,0s-.3,0-.4,0c-.1,0-.2.1-.3.2,0,0-.1.2-.2.3,0,.1,0,.2,0,.3,0,.1,0,.2,0,.3v.7c0,.1,0,.2,0,.3,0,.1,0,.2,0,.3,0,.1.1.2.2.3,0,0,.2.1.3.2.1,0,.3,0,.4,0s.3,0,.4,0h0c.1,0,.2-.1.3-.2h.1c0-.2,0-.2,0-.3,0,0,0-.2,0-.3v-.2c0,0,0-.1,0-.2v-.7c0,0,0-.1,0-.2v-.2ZM34.1,51.8v.8c0,0,0,.2,0,.2,0,0,0,0,0,.1h0c0,.2,0,.2-.1.2,0,0-.1,0-.2,0s-.2,0-.2,0c0,0,0,0,0,0h0c0-.1,0-.2,0-.3,0,0,0-.2,0-.2v-.8c0,0,0-.2,0-.2,0,0,0-.1,0-.2,0,0,0-.1.1-.1,0,0,.1,0,.2,0s.2,0,.2,0c0,0,0,0,.1.1h0c0,0,0,.1,0,.2,0,0,0,.2,0,.2Z" fill="#001c39"></path>
+<polygon fill="#001c39" points="28 51.6 27.5 51.9 27.6 51.4 27.6 51.3 27.1 51.3 27.2 51.8 26.8 51.5 26.6 52 27 52.2 26.6 52.4 26.5 52.4 26.7 52.9 27.2 52.6 27.1 53.1 27.6 53.1 27.5 52.6 27.9 52.9 28.1 52.5 27.7 52.2 28.2 52 28 51.6"></polygon>
+<path d="M41.4,44.4c0-.2-.2-.3-.3-.4-.1,0-.3-.1-.6-.1s-.3,0-.4,0h-.1c-.1.2-.2.3-.3.4,0,.1,0,.3,0,.5s0,.3,0,.5c0,.2.2.3.3.4.1,0,.3.1.5.1s.1,0,.2,0l-.6,1.1h.7l.5-.9c0-.2.1-.3.2-.4,0-.1,0-.3.1-.4,0-.1,0-.3,0-.4s0-.3,0-.4h0ZM40.2,44.7c0,0,0-.1.1-.2h0c0,0,.1,0,.2,0s.2,0,.2,0c0,0,0,0,.1.2h0c0,0,0,.2,0,.2s0,.2,0,.2c0,0,0,.1-.1.2,0,0-.1,0-.2,0s-.2,0-.2,0h0c0,0,0-.1-.1-.2,0,0,0-.2,0-.2s0-.2,0-.2Z" fill="#001c39"></path>
+<path d="M34.8,45.8c0-.1-.1-.2-.2-.3,0,0,0,0-.1,0,0,0,0,0,.1,0,0,0,.2-.2.2-.3,0-.1,0-.2,0-.3s0-.2,0-.3h0c0-.2-.2-.3-.3-.4-.1,0-.3-.1-.6-.1s-.4,0-.5.1c-.1,0-.2.2-.3.3,0,.1,0,.2,0,.4s0,.3,0,.4h0c0,.1.1.2.2.3h.1c-.1.1-.2.2-.3.3-.1.1-.2.3-.2.5s0,.3,0,.4c0,.1.2.2.3.3.1,0,.3.1.6.1s.4,0,.6-.1c.1,0,.3-.2.3-.3,0-.1,0-.3,0-.4s0-.3,0-.4h0ZM33.5,46.1c0,0,0-.2.1-.3,0,0,.2-.1.3-.2,0,0,.1,0,.2,0h0s0,0,0,0c0,0,.1.1.2.2h0c0,0,0,.1,0,.2s0,.1,0,.2h0c0,0,0,0,0,.1h0c0,0-.1,0-.3,0s-.2,0-.3,0c0,0,0,0,0,0h0c0,0,0-.2,0-.2ZM34.2,44.9c0,0,0,.1-.2.1h0s0,0-.1,0h0s0,0-.1,0h0c0,0-.1,0-.2-.2,0,0,0-.1,0-.2s0,0,0-.1c0,0,0,0,.1,0h0c0,0,.1,0,.2,0,.1,0,.2,0,.2,0h0s0,0,0,0h0s0,0,0,0c0,0,0,0,0,.1s0,.1,0,.2Z" fill="#001c39"></path>
+<polygon fill="#001c39" points="28.3 44 26.5 44 26.5 44.6 27.6 44.6 26.7 46.9 26.7 47 27.3 47 28.2 44.5 28.3 44.5 28.3 44.4 28.3 44.4 28.3 44.4 28.3 44"></polygon>
+<path d="M41.2,38.5h0c-.1,0-.3-.1-.5-.1s-.1,0-.2,0l.5-1h0c0-.1-.7-.1-.7-.1l-.5.9c0,0,0,.1-.1.2v.2c-.1.1-.2.2-.2.4,0,.1,0,.3,0,.4s0,.3,0,.5h0c0,.2.2.3.3.4h0c.1,0,.3.1.6.1s.4,0,.6-.1c.1,0,.2-.2.3-.4,0-.1,0-.3,0-.5s0-.3,0-.5c0-.2-.2-.3-.3-.4ZM41,39.3s0,0,0,.1h0c0,.2,0,.2-.1.3,0,0-.1,0-.2,0s-.1,0-.2,0h0c0,0,0,0,0-.1h0c0-.1,0-.2,0-.3,0,0,0-.2,0-.2h0c0,0,0-.1.1-.2,0,0,.1,0,.2,0s.2,0,.2,0c0,0,0,0,.1.2h0c0,0,0,.2,0,.2Z" fill="#001c39"></path>
+<path d="M34.9,38.8c0-.2-.2-.3-.3-.4-.1,0-.3-.1-.5-.1s-.2,0-.3,0h0s0,0,0,0v-.5h1.1v-.6h-1.5v1.6c-.1,0,.3.2.3.2h0c0,0,.1-.1.2-.2,0,0,.1,0,.2,0s.1,0,.2,0h0c0,0,0,0,0,.1h0c0,0,0,.2,0,.3s0,.3-.1.3c0,0-.2.1-.3.1s-.2,0-.2,0c0,0,0,0-.1,0h-.1c0,0-.1-.1-.2-.2h0c0,0-.2.4-.2.4h0s0,0,0,0c0,0,.2.1.3.1,0,0,.2,0,.3.1.1,0,.2,0,.4,0,.2,0,.4,0,.5-.1h.1c.1-.1.2-.2.2-.3,0-.1.1-.3.1-.5s0-.3,0-.4h0Z" fill="#001c39"></path>
+<polygon fill="#001c39" points="28 38.4 27.5 38.4 27.5 39.1 27.1 39.1 27.8 37.3 27.8 37.2 27.2 37.2 26.4 39.1 26.4 39.7 27.5 39.7 27.5 40.3 28 40.3 28 39.7 28.4 39.7 28.4 39.1 28 39.1 28 38.4"></polygon>
+<path d="M40.6,33c-.1,0-.2,0-.2,0,0,0,0,0,0,0h0c0-.1,0-.2,0-.3h0c0,0-.6,0-.6,0h0c0,.3,0,.5.1.6,0,.1.2.3.3.3h.1c.1,0,.3.1.4.1s.4,0,.5-.1c.1,0,.2-.2.3-.3,0-.1.1-.3.1-.5s0-.3,0-.4c0,0,0-.2-.1-.2h0c0,0,0,0,0-.1,0,0,0,0,0,0,0,0,.1-.2.2-.3,0,0,0-.2,0-.3s0-.3,0-.4h0,0c0-.2-.2-.3-.3-.3-.1,0-.3,0-.5,0-.2,0-.3,0-.5,0-.1,0-.3.2-.3.3,0,.1-.1.3-.1.6h0c0,0,.6,0,.6,0h0c0-.2,0-.3,0-.4,0,0,0,0,0-.1h.1s0,0,.1,0c.1,0,.2,0,.3,0,0,0,0,.1,0,.2s0,.1,0,.2c0,0,0,0,0,0,0,0,0,0-.1,0,0,0-.2,0-.3,0h0v.5h0c.1,0,.3,0,.3,0h0c0,0,.1,0,.1.1h0c0,.1,0,.2,0,.3,0,.1,0,.2,0,.3,0,0-.1,0-.3,0Z" fill="#001c39"></path>
+<path d="M33.6,31.5c0-.1,0-.2,0-.3,0,0,0-.1.1-.1,0,0,.1,0,.2,0s.2,0,.3,0h0c0,0,0,.2,0,.3s0,.1,0,.2h0s0,0,0,0h0c0,.2-.1.3-.2.3l-.9,1v.5h1.8v-.5h-1l.5-.6.2-.2c0,0,0-.1.1-.2,0-.1.1-.2.2-.3,0-.1,0-.2,0-.4s0-.3,0-.4h0,0c0-.2-.2-.3-.3-.4-.1,0-.3-.1-.5-.1-.3,0-.6,0-.7.3-.2.2-.2.4-.2.8h0c0,0,.6,0,.6,0h0Z" fill="#001c39"></path>
+<polygon fill="#001c39" points="27.2 31.1 27.2 33 26.4 33 26.4 33.5 28.4 33.5 28.4 33 27.8 33 27.8 30.5 27.4 30.5 27.4 30.5 26.4 30.6 26.5 31.2 27.2 31.1"></polygon>
+</g></symbol></svg><div class="lbns">
+<div class="lbns-head">
+<h2>Save more than 70% with Lubn</h2>
+<p>Unlike standard Bluetooth devices that rely on fragmented third-party software and a Wi-Fi gateway, Lubn operates as a unified management suite. This vertical integration eliminates hidden fees and technical friction, allowing you to manage your entire portfolio from one system.</p>
+</div>
+<div class="lbns-scroll">
+<table class="lbns-table">
+<colgroup><col class="lbns-col-label"/><col/><col/></colgroup>
+<thead>
+<tr>
+<th scope="col"><span class="lbns-sr">Feature</span></th>
+<th class="lbns-hl" scope="col">
+<div class="lbns-pcard">
+<span class="lbns-pname">Lubn AI Lockbox &amp; PMS</span>
+<span class="lbns-icon">
+<svg viewbox="0 0 205 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-lubn"></use></svg>
+</span>
+</div>
+</th>
+<th scope="col">
+<div class="lbns-pcard">
+<span class="lbns-pname">Other Bluetooth Lockbox &amp; PMS</span>
+<span class="lbns-icon">
+<svg viewbox="0 0 354 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-other"></use></svg>
+</span>
+</div>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="lbns-price-row">
+<th scope="row">Lockbox Retail Price</th>
+<td class="lbns-hl"><b>$299<span class="lbns-cents">.95</span><span class="lbns-unit">/unit</span></b><span class="lbns-price-pname">Lubn AI Lockbox &amp; PMS</span><span aria-hidden="true" class="lbns-cell-icon lbns-price-icon"><svg viewbox="0 0 205 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-lubn"></use></svg></span></td>
+<td><b>$199<span class="lbns-cents">.95</span><span class="lbns-unit">/unit</span></b><span class="lbns-price-pname">Other Bluetooth Lockbox &amp; PMS</span><span aria-hidden="true" class="lbns-cell-icon lbns-price-icon"><svg viewbox="0 0 354 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-other"></use></svg></span></td>
+</tr>
+<tr>
+<th scope="row">Data Network</th>
+<td class="lbns-hl"><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-lockbox-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Lubn AI Lockbox &amp; PMS: </span><b>+ $9<span class="lbns-cents">.99</span><span class="lbns-unit">/month/unit</span></b><span>Streamline your operations with Lubn's built-in LTE connectivity—no Wi-Fi or Bluetooth pairing necessary.</span></span></td>
+<td><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-bluetooth-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Other Bluetooth Lockbox &amp; PMS: </span><b>+ $40/month/unit</b><span>Maintaining Wi-Fi for vacant properties is expensive and labor-intensive. While long-term internet subscriptions work for residents, they are an unnecessary burden for rental and for-sale listings.</span></span></td>
+</tr>
+<tr>
+<th scope="row">Wi-Fi Gateway</th>
+<td class="lbns-hl"><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-lockbox-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Lubn AI Lockbox &amp; PMS: </span><b>Not needed</b><span>With embedded LTE, the Lubn Lockbox operates independently of Wi-Fi gateways or local networks.</span></span></td>
+<td><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-bluetooth-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Other Bluetooth Lockbox &amp; PMS: </span><b>+ $80/unit</b><span>Bluetooth relies on a Wi-Fi gateway and router to stay online. To maintain a stable connection, the router, gateway and lockbox must be placed in close proximity.</span></span></td>
+</tr>
+<tr>
+<th scope="row">Tracking</th>
+<td class="lbns-hl"><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-lockbox-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Lubn AI Lockbox &amp; PMS: </span><b>Embedded GPS</b><span>Track the device location in Lubn PMS.</span></span></td>
+<td><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-bluetooth-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Other Bluetooth Lockbox &amp; PMS: </span><b>+ $30 to add a 3rd party BLE tracker</b><span>Track the device location in another App.</span></span></td>
+</tr>
+<tr>
+<th scope="row">Property Management Software</th>
+<td class="lbns-hl"><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-lockbox-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Lubn AI Lockbox &amp; PMS: </span><b>Included</b><span>Lubn PMS comes with every Lubn Lockbox.</span></span></td>
+<td><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-bluetooth-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Other Bluetooth Lockbox &amp; PMS: </span><b>+ $2~$25/month/unit</b><span>Third-party PMS requires separate subscriptions and often mandates a minimum number of properties to get started.</span></span></td>
+</tr>
+<tr>
+<th scope="row">Check-in Photo</th>
+<td class="lbns-hl"><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-lockbox-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Lubn AI Lockbox &amp; PMS: </span><b>Included - Lubn Exclusive!</b></span></td>
+<td><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-bluetooth-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Other Bluetooth Lockbox &amp; PMS: </span><b>No</b></span></td>
+</tr>
+<tr>
+<th scope="row">Self-Schedule</th>
+<td class="lbns-hl"><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-lockbox-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Lubn AI Lockbox &amp; PMS: </span><b>Included - Lubn Exclusive!</b></span></td>
+<td><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-bluetooth-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Other Bluetooth Lockbox &amp; PMS: </span><b>No</b></span></td>
+</tr>
+<tr>
+<th scope="row">Schedule SDK/API</th>
+<td class="lbns-hl"><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-lockbox-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Lubn AI Lockbox &amp; PMS: </span><b>Included</b><span>You can embed Lubn's Self-Schedule SDK into your own property website at no additional fee.</span></span></td>
+<td><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-bluetooth-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Other Bluetooth Lockbox &amp; PMS: </span><b>+ $2/month/unit</b><span>API integrations require additional subscriptions and setup.</span></span></td>
+</tr>
+<tr>
+<th scope="row">e-signature</th>
+<td class="lbns-hl"><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-lockbox-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Lubn AI Lockbox &amp; PMS: </span><b>Free e-sign included</b><span>Lubn features integrated e-signature, automatically saving all executed documents directly to the corresponding property profile for easy access.</span></span></td>
+<td><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-bluetooth-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Other Bluetooth Lockbox &amp; PMS: </span><b>+ $5/doc with 3rd party service</b><span>Third-party e-signature services require separate subscriptions and often result in fragmented records that are difficult to track across your portfolio.</span></span></td>
+</tr>
+<tr>
+<th scope="row">Annual Cost<br/><small style="font-weight:400">(3-year average)</small></th>
+<td class="lbns-hl"><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-lockbox-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Lubn AI Lockbox &amp; PMS: </span><b>≈ $200/year/unit</b><span>Save at least 70% on management tool costs with Lubn's vertically integrated system. Lubn's partners can save even more. Contact service@lubn.com to become Lubn partner.</span></span></td>
+<td><span aria-hidden="true" class="lbns-cell-icon"><svg viewbox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><use href="#lbns-ic-bluetooth-simple"></use></svg></span><span class="lbns-cell-text"><span class="lbns-sr">Other Bluetooth Lockbox &amp; PMS: </span><b>≈ $800~$1,080/year/unit</b><span>A Bluetooth lockbox actually costs more over time when you factor in the separate subscriptions required for remote management.</span></span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>

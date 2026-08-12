@@ -1,0 +1,415 @@
+<!--
+  Lubn — "Why Lubn Lockbox?" comparison section
+  ────────────────────────────────────────────────────────────────────────
+  Self-contained HTML/Liquid element. Same all-in-one pattern as the
+  pricing block: paste this once, no external CSS/JS needed.
+
+  Built as a real <table> per tab (not images) on purpose — search engines
+  and screen readers can read every claim ("LTE cellular", "10 meter
+  Bluetooth range", etc.) directly, instead of a screenshot with no
+  crawlable text. All three tabs' tables are present in the DOM at once;
+  only the inactive ones are hidden with the `hidden` attribute — so the
+  full comparison is still there for anything reading the raw HTML, and
+  switching tabs is just a display toggle, not a content swap.
+
+  Uses real product SVG icons (Lubn AI Lockbox 3 / BLE Lockbox / PIN
+  Lockbox), inlined directly in the markup — no external image requests.
+  Each icon appears 3x (once per tab), tagged with data-icon="lubn" /
+  "ble" / "pin" so a specific icon's every occurrence is easy to find if
+  the artwork ever needs to change again.
+-->
+<style>
+.lbnc{--ink:#001C39;--mut:#5A7189;--line:#e7e5df;--soft:#f7f6f2;--blue-bg:#eaf2fb;--blue-line:#c9def5;
+  font-family:inherit;color:var(--ink);max-width:1440px;margin:0 auto;box-sizing:border-box}
+/* No vertical padding here on purpose — PageFly wraps this block in its own
+   <section>, which already has its own configurable top/bottom padding
+   (set per-section in the PageFly editor, same as every other section on
+   this page). Adding padding here too stacked on top of that section's
+   padding and made this block sit with visibly more surrounding space than
+   its neighbors. Adjust spacing via the PageFly section settings instead —
+   set it to match whatever the sections above/below use. */
+.lbnc *,.lbnc *::before,.lbnc *::after{box-sizing:border-box}
+
+.lbnc-head{margin:0 0 30px}
+.lbnc-head h2{font-size:50px !important;font-weight:700;margin:0 0 12px;letter-spacing:-0.01em}
+.lbnc-head p{font-size:18px !important;line-height:1.65;color:var(--ink);margin:0;max-width:720px}
+
+.lbnc-tabs{display:flex;gap:40px;border-bottom:1px solid var(--line);margin:0 0 28px;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none}
+.lbnc-tabs::-webkit-scrollbar{display:none}
+.lbnc-tab{appearance:none;border:0;background:transparent;font:inherit;font-size:18px;font-weight:400;
+  color:var(--mut);padding:0 0 14px;cursor:pointer;white-space:nowrap;border-bottom:1px solid transparent;
+  margin-bottom:-1px;transition:color .15s,border-color .15s}
+.lbnc-tab:hover{color:var(--ink)}
+.lbnc-tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.lbnc-tab:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+.lbnc-panel[hidden]{display:none}
+.lbnc-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+/* PageFly applies its own default border/background/shadow to <table>
+   elements — without this reset those show through as an unwanted outer
+   frame around the whole comparison table. Same fix already applied to
+   the pricing plans table (.lbnp) for the same reason. */
+.lbnc-scroll{border:0 !important;border-radius:0 !important;background:none !important;box-shadow:none !important}
+.lbnc-table,.lbnc-table thead,.lbnc-table tbody,.lbnc-table tfoot,.lbnc-table tr,.lbnc-table th,.lbnc-table td{
+  border:0 !important;background:none !important;box-shadow:none !important;border-radius:0 !important;margin:0}
+
+.lbnc-table{border-collapse:separate;border-spacing:0;width:100%;min-width:640px;table-layout:fixed}
+.lbnc-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.lbnc-col-label{width:22%}
+
+.lbnc-table th,.lbnc-table td{text-align:left;vertical-align:top;padding:16px 18px;border-bottom:1px solid var(--line) !important}
+.lbnc-table thead th{padding-top:16px;padding-bottom:20px;text-align:center;border-bottom:0 !important}
+.lbnc-table tbody th{font-size:14.5px;font-weight:400;color:var(--mut);padding-left:0;text-align:left}
+.lbnc-table tbody tr:last-child td,.lbnc-table tbody tr:last-child th{border-bottom:0 !important}
+
+/* Switched from flex (with order) to plain block layout — order:!important
+   on flex children still lost to whatever PageFly's own CSS was doing on
+   the live page, flipping icon/name visually. Block layout has no "order"
+   concept for PageFly to override in the first place: it always renders
+   in HTML source order (icon, then name), no matter what other rules are
+   fighting over it. */
+.lbnc-pcard{display:block !important;text-align:center}
+.lbnc-icon{display:flex !important;align-items:center;justify-content:center;width:52px;height:52px;margin:10px auto 0 !important}
+.lbnc-icon svg{width:100%;height:100%;display:block}
+.lbnc-pname{display:block !important;font-size:16px;font-weight:600}
+
+.lbnc-table td b{display:block;font-size:15.5px;font-weight:600;margin:0 0 4px;color:var(--ink) !important}
+.lbnc-table td span{display:block;font-size:13.5px;line-height:1.6;color:var(--mut);font-weight:400}
+.lbnc-dash{color:#c4c4c4 !important;font-weight:400 !important}
+/* Per-cell product icon + text wrapper, used for the mobile card layout
+   further down — hidden on desktop, where the column header icon already
+   covers this. */
+.lbnc-cell-icon{display:none !important}
+.lbnc-cell-text b,.lbnc-cell-text span{display:block}
+
+/* Highlighted "Lubn AI Lockbox 3" column — a light blue card running the
+   full height of the table, rounded only at the very top and bottom rows. */
+.lbnc-table th.lbnc-hl,.lbnc-table td.lbnc-hl{background:var(--blue-bg) !important}
+.lbnc-table thead th.lbnc-hl{border-radius:16px 16px 0 0 !important}
+.lbnc-table tbody tr:last-child .lbnc-hl{border-radius:0 0 16px 16px !important}
+.lbnc-table tbody .lbnc-hl{border-bottom:1px solid var(--blue-line) !important}
+.lbnc-table tbody tr:last-child .lbnc-hl{border-bottom:0 !important}
+
+/* Heading/intro breakpoints per the sizes used across this page's other
+   sections: desktop / <1200 / <1024 / <768. The <1024 and <768 tiers use
+   identical values here, so they're combined into one max-width:1024px
+   rule rather than repeated. Tabs use their own scale (18px → 16px at
+   ≤1024px), matching this page's tab-style labels elsewhere. */
+@media (max-width:1200px){
+  .lbnc-head h2{font-size:36px !important}
+}
+@media (max-width:1024px){
+  .lbnc-head h2{font-size:24px !important}
+  .lbnc-head p{font-size:16px !important}
+  .lbnc-tab{font-size:16px}
+}
+@media (max-width:749px){
+  /* Card-stacked mobile layout, replacing horizontal scroll. Each feature
+     row becomes its own card; the three products' answers stack inside it
+     instead of sitting in side-by-side columns. The visual header row
+     (icons + product names) is hidden — with only one column wide at a
+     time there's nothing to align it against — and each value shows its
+     own small product icon instead, reusing the same icon art from the
+     header (duplicated into every cell, hidden on desktop, shown here).
+     A visually-hidden .lbnc-sr label ("Lubn AI Lockbox 3: ") sits before
+     each answer for screen readers, since the icon itself is decorative
+     (aria-hidden). The table keeps its real <thead>/<tbody>/<th>/<td>
+     structure in the DOM throughout (only display is changed), so nothing
+     here affects the SEO-crawlable content itself. */
+  .lbnc-scroll{overflow-x:visible !important}
+  .lbnc-table{min-width:0 !important;width:100% !important;table-layout:auto !important}
+  .lbnc-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .lbnc-table,.lbnc-table tbody,.lbnc-table tr,.lbnc-table th{display:block !important;width:100% !important}
+  .lbnc-table td{display:flex !important;width:100% !important;gap:14px;align-items:center}
+
+  .lbnc-table tbody tr{border:1px solid var(--line) !important;border-radius:14px !important;padding:16px !important;margin:0 0 14px !important}
+  .lbnc-table tbody tr:last-child{margin-bottom:0 !important}
+
+  .lbnc-table tbody th{font-size:16px;font-weight:600;color:var(--ink);margin:0 0 12px}
+  .lbnc-table th,.lbnc-table td{padding:14px !important;border-bottom:1px solid var(--line) !important}
+  .lbnc-table tbody th{padding:0 0 12px !important}
+  .lbnc-table tbody tr:last-child td,.lbnc-table tbody tr:last-child th{border-bottom:0 !important}
+  .lbnc-table tbody td:last-child{border-bottom:0 !important;padding-bottom:0 !important}
+
+  .lbnc-cell-icon{display:flex !important;align-items:center;justify-content:center;width:44px !important;height:44px !important;flex:0 0 44px !important}
+  .lbnc-cell-icon svg{width:100%;height:100%;display:block}
+  .lbnc-cell-text{display:block !important;flex:1 1 0% !important;min-width:0 !important;width:auto !important;overflow-wrap:break-word !important;word-break:break-word !important}
+
+  .lbnc-table th.lbnc-hl,.lbnc-table td.lbnc-hl{border-radius:12px !important;padding:14px !important;margin:0 0 12px !important}
+  .lbnc-table tbody tr:last-child .lbnc-hl{border-radius:12px !important}
+  .lbnc-table tbody .lbnc-hl{border-bottom:0 !important}
+}
+</style>
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" xmlns="http://www.w3.org/2000/svg"><symbol id="lbnc-ic-lubn" viewbox="0 0 94 94">
+<path d="M59.9323 27.5C60.7489 27.5 61.4158 28.1533 61.4323 28.9697L62.6462 88.9697C62.6631 89.8098 61.9865 90.5 61.1462 90.5H32.1774C31.3427 90.4998 30.6682 89.8181 30.6774 88.9834L31.3405 28.9834C31.3496 28.1615 32.0186 27.5 32.8405 27.5H59.9323Z" stroke="#001C39" stroke-linejoin="round" stroke-miterlimit="10"></path>
+<path d="M46.5324 66.7314C49.4958 66.7314 51.8981 64.3291 51.8981 61.3657C51.8981 58.4023 49.4958 56 46.5324 56C43.569 56 41.1667 58.4023 41.1667 61.3657C41.1667 64.3291 43.569 66.7314 46.5324 66.7314Z" stroke="#001C39" stroke-linejoin="round" stroke-miterlimit="10"></path>
+<rect fill="#001C39" height="2.2502" rx="0.259639" width="0.519278" x="46.276" y="58.5"></rect>
+<path d="M46.5356 63.8397C45.1378 63.8397 44 62.7661 44 61.447C44 60.6522 44.4178 59.9099 45.1178 59.4632C45.2711 59.3667 45.4778 59.4045 45.58 59.5471C45.6822 59.6918 45.6422 59.8868 45.4911 59.9833C44.9756 60.3125 44.6667 60.8598 44.6667 61.4449C44.6667 62.4179 45.5044 63.2085 46.5356 63.2085C47.5667 63.2085 48.4044 62.4179 48.4044 61.4449C48.4044 60.8326 48.0755 60.2727 47.5222 59.9476C47.3667 59.8553 47.3178 59.6624 47.4156 59.5135C47.5133 59.3667 47.7178 59.3206 47.8755 59.4129C48.6244 59.8533 49.0711 60.6124 49.0711 61.4449C49.0711 62.764 47.9333 63.8376 46.5356 63.8376V63.8397Z" fill="#001C39"></path>
+<path d="M46.9616 3.19922C54.2016 3.19933 60.0795 9.07748 60.0798 16.3174V24.1738L60.0856 27.002L60.0866 27.501C60.0868 27.6337 60.0339 27.7615 59.9401 27.8555C59.8464 27.9492 59.7192 28.0019 59.5866 28.002H52.6647C52.3889 28.0016 52.1648 27.7778 52.1647 27.502V15.543C52.1646 12.7712 49.892 10.5127 47.0837 10.5127H46.319C43.5108 10.5128 41.2381 12.7713 41.238 15.543V27.502C41.238 27.7781 41.0141 28.002 40.738 28.002H34.1667C34.0341 28.002 33.9069 27.9492 33.8132 27.8555C33.7195 27.7617 33.6667 27.6345 33.6667 27.502V16.2451C33.6671 9.04518 39.5123 3.19922 46.7136 3.19922H46.9616ZM46.7136 4.19922C40.0646 4.19922 34.6671 9.59742 34.6667 16.2451V27.002H40.238V15.543C40.2381 12.2104 42.9672 9.51284 46.319 9.5127H47.0837C50.4357 9.5127 53.1646 12.2103 53.1647 15.543V27.002H59.0856L59.0847 26.8193L59.0798 24.1758V16.3174C59.0795 9.62978 53.6493 4.19933 46.9616 4.19922H46.7136Z" fill="#001C39"></path>
+<rect height="9.91327" rx="1.5" stroke="#001C39" width="9.91327" x="41.6667" y="34.3208"></rect>
+<circle cx="46.5325" cy="39.3691" r="2.68304" stroke="#001C39"></circle>
+</symbol><symbol id="lbnc-ic-ble" viewbox="0 0 94 94">
+<path d="M45.5193 6.10938C52.8733 6.10943 58.8171 12.2688 58.8171 19.8213V28.0469L58.823 30.793L58.824 31.5303C58.8242 31.663 58.7713 31.7908 58.6775 31.8848C58.5837 31.9785 58.4566 32.0312 58.324 32.0312H51.2996C51.0236 32.031 50.7996 31.8073 50.7996 31.5312V19.4629C50.7996 16.4138 48.4609 13.9846 45.6365 13.9844H44.8601C42.0355 13.9844 39.696 16.4137 39.696 19.4629V28.0479H39.7078V31.5312C39.7078 31.8074 39.4839 32.0312 39.2078 32.0312H32.5427C32.2666 32.0312 32.0427 31.8074 32.0427 31.5312V19.7461C32.0427 12.2354 37.9526 6.10945 45.2673 6.10938H45.5193ZM45.2673 7.10938C38.5347 7.10945 33.0427 12.7574 33.0427 19.7461V31.0312H38.7078V28.5H38.696V19.4629C38.696 15.913 41.433 12.9844 44.8601 12.9844H45.6365C49.0635 12.9846 51.7996 15.9132 51.7996 19.4629V31.0312H57.823L57.8171 28.0488V19.8213C57.8171 12.7909 52.2913 7.10943 45.5193 7.10938H45.2673Z" fill="#001C39"></path>
+<rect fill="white" height="56.5781" rx="2.5" stroke="#001C39" width="36.8125" x="27.0271" y="30.3125"></rect>
+<rect fill="white" height="49" rx="1.5" stroke="#001C39" width="29" x="31" y="34.5"></rect>
+<path d="M54.0836 68.1484L54.0748 68.2061L53.9088 69.2881H54.443L54.6168 68.1904L54.6237 68.1484H55.1637L55.1549 68.2061L54.9869 69.2881H55.4313V69.7383H54.9176L54.8151 70.4033H55.3756V70.8535H54.7438L54.5602 72.0664L54.5533 72.1094H53.9948L54.0035 72.0518L54.1949 70.8535H53.6686L53.4801 72.0664L53.4733 72.1094H52.9166L52.9254 72.0518L53.1168 70.8535H52.6676V70.4033H53.1881L53.2936 69.7383H52.7233V69.2881H53.3649L53.5387 68.1904L53.5455 68.1484H54.0836ZM53.7369 70.4033H54.2662L54.3707 69.7383H53.8375L53.7369 70.4033Z" fill="#001C39" stroke="#001C39" stroke-width="0.1"></path>
+<path d="M45.2109 68.085C45.4135 68.085 45.5905 68.1141 45.7402 68.1748C45.8889 68.2334 46.0142 68.317 46.1143 68.4248C46.2127 68.5309 46.2903 68.6523 46.3467 68.7891L46.4199 68.9961C46.4399 69.0674 46.4547 69.1411 46.4658 69.2168L46.4922 69.4424C46.4981 69.5177 46.501 69.5932 46.501 69.6689V70.6191C46.501 70.6933 46.4985 70.7676 46.4922 70.8418L46.4639 71.0645C46.44 71.2122 46.3992 71.3524 46.3418 71.4844C46.2983 71.5843 46.2431 71.6761 46.1768 71.7598L46.1064 71.8408C46.0316 71.9187 45.9431 71.9838 45.8418 72.0371L45.7363 72.0869C45.5881 72.146 45.4122 72.1748 45.2109 72.1748C45.0067 72.1748 44.828 72.1459 44.6768 72.0869C44.5272 72.0285 44.4008 71.9474 44.2979 71.8438C44.196 71.7412 44.1144 71.6237 44.0547 71.4902C43.9957 71.3583 43.9542 71.218 43.9287 71.0703C43.9035 70.9236 43.8906 70.7754 43.8906 70.627V69.6611C43.8906 69.5094 43.9021 69.3592 43.9258 69.2109L43.9766 68.9902C43.9977 68.919 44.0232 68.8501 44.0527 68.7832C44.1123 68.6482 44.1919 68.5281 44.292 68.4238C44.3949 68.3164 44.522 68.2333 44.6719 68.1748C44.8247 68.114 45.0051 68.085 45.2109 68.085ZM45.2109 68.7217C45.0781 68.7217 44.9756 68.7486 44.8994 68.7979C44.8205 68.8489 44.7606 68.9164 44.7197 69.001C44.6788 69.0872 44.6502 69.1851 44.6338 69.2949C44.6187 69.4047 44.6104 69.5143 44.6104 69.624V70.6504C44.6104 70.7601 44.6191 70.8706 44.6357 70.9805C44.652 71.086 44.6814 71.1816 44.7236 71.2676L44.7588 71.3252C44.7971 71.3804 44.845 71.4266 44.9033 71.4639C44.978 71.5116 45.0793 71.5381 45.2109 71.5381C45.3426 71.5381 45.4427 71.5113 45.5156 71.4639C45.5918 71.4143 45.6505 71.3492 45.6914 71.2676C45.7336 71.1817 45.7626 71.086 45.7773 70.9805C45.7925 70.8706 45.7998 70.7602 45.7998 70.6504V69.624C45.7998 69.5142 45.7925 69.4039 45.7773 69.2939C45.7699 69.2392 45.7591 69.1874 45.7451 69.1387L45.6934 69.001C45.6539 68.9163 45.595 68.8489 45.5176 68.7979C45.4448 68.749 45.3441 68.7217 45.2109 68.7217Z" fill="#001C39" stroke="#001C39" stroke-width="0.1"></path>
+<path d="M36.9927 68.9727L36.9878 69.0264L36.9263 69.7725L37.4731 69.3789L37.5229 69.3428L37.5483 69.3994L37.7368 69.8232L37.7563 69.8682L37.7114 69.8887L37.1235 70.1562L37.6899 70.4814L37.7329 70.5059L37.7085 70.5488L37.4878 70.9521L37.4585 71.0068L37.4116 70.9658L36.9302 70.5459L36.9878 71.248L36.9927 71.3018H36.4702L36.4751 71.248L36.5337 70.499L35.9868 70.8945L35.937 70.9307L35.9116 70.874L35.7261 70.4502L35.7065 70.4053L35.7515 70.3848L36.3354 70.1172L35.77 69.792L35.728 69.7676L35.7515 69.7246L35.9722 69.3223L36.0015 69.2676L36.0483 69.3086L36.5298 69.7275L36.4751 69.0264L36.4702 68.9727H36.9927Z" fill="#001C39" stroke="#001C39" stroke-width="0.1"></path>
+<path d="M54.4575 59.0376C54.7573 59.0376 55.0029 59.0945 55.1899 59.2134C55.3747 59.3309 55.5088 59.4888 55.5903 59.686C55.6722 59.8806 55.7124 60.0957 55.7124 60.3296C55.7124 60.4181 55.7086 60.5047 55.7007 60.5894L55.6655 60.8364C55.6355 60.9976 55.5884 61.1621 55.5239 61.3296C55.4612 61.4964 55.379 61.6804 55.2778 61.8813L54.6968 63.0366L54.6831 63.064H53.9204L53.9575 62.9917L54.6753 61.5688C54.5818 61.5907 54.4774 61.603 54.3618 61.603C54.0999 61.603 53.8823 61.5491 53.7124 61.437H53.7114C53.5436 61.3243 53.4198 61.1708 53.3403 60.978V60.9771C53.2633 60.7861 53.2251 60.5726 53.2251 60.3374C53.2251 60.1056 53.2634 59.892 53.3403 59.6978C53.4185 59.4988 53.5479 59.3388 53.728 59.2192L53.8003 59.1763C53.9747 59.0826 54.195 59.0376 54.4575 59.0376ZM54.4595 59.6636C54.3014 59.6636 54.188 59.6973 54.1118 59.7563L54.1108 59.7554C54.0326 59.8173 53.9789 59.8983 53.9478 59.9976C53.9154 60.0991 53.899 60.2087 53.8989 60.3267C53.8989 60.4414 53.9147 60.5519 53.9458 60.6577C53.9754 60.7566 54.0298 60.8372 54.1099 60.9009L54.1753 60.9409C54.2482 60.9761 54.3436 60.9956 54.4644 60.9956C54.6253 60.9956 54.7411 60.9616 54.8188 60.9009C54.9007 60.8369 54.9568 60.7558 54.9878 60.6567C55.0203 60.5512 55.0366 60.441 55.0366 60.3267C55.0366 60.2091 55.019 60.0998 54.9839 59.9985V59.9976C54.9515 59.8985 54.8932 59.8186 54.8101 59.7563C54.7303 59.6968 54.6155 59.6636 54.4595 59.6636Z" fill="#001C39" stroke="#001C39" stroke-width="0.1"></path>
+<path d="M45.5802 59.0454C45.8832 59.0454 46.1266 59.0923 46.3058 59.1909C46.4818 59.2879 46.6092 59.4136 46.6827 59.5688H46.6818C46.7545 59.7173 46.7921 59.8711 46.7921 60.0298C46.7921 60.188 46.7576 60.3341 46.6886 60.4663L46.6876 60.4653C46.6377 60.562 46.5754 60.6502 46.4991 60.729L46.4191 60.8042C46.347 60.8669 46.2686 60.9195 46.1857 60.9653C46.2719 61.0168 46.3554 61.0717 46.4337 61.1323C46.5608 61.2309 46.6628 61.35 46.7404 61.4888H46.7413C46.8225 61.6296 46.8615 61.7995 46.8615 61.9956C46.8614 62.2024 46.8196 62.3914 46.7355 62.562C46.6497 62.7358 46.5106 62.8734 46.3214 62.9741C46.132 63.074 45.8836 63.1216 45.5802 63.1216C45.2768 63.1216 45.0289 63.0741 44.8409 62.9741C44.7013 62.8998 44.5894 62.8042 44.506 62.688L44.4318 62.5649C44.3492 62.3944 44.3088 62.2052 44.3087 61.9985C44.3087 61.7439 44.385 61.5209 44.5382 61.3325C44.6567 61.187 44.8036 61.0675 44.9786 60.9741C44.9669 60.9671 44.9541 60.9618 44.9425 60.9546L44.7648 60.8325C44.6496 60.7443 44.556 60.6373 44.4845 60.5122V60.5112C44.4131 60.3813 44.3781 60.2269 44.3781 60.0503C44.3781 59.8773 44.4189 59.7138 44.5001 59.561C44.5829 59.4055 44.7139 59.2813 44.8898 59.188L45.0343 59.1255C45.1884 59.0717 45.3707 59.0454 45.5802 59.0454ZM45.5646 61.2905C45.3791 61.3724 45.2394 61.4647 45.1437 61.5688C45.0352 61.6869 44.9826 61.8162 44.9825 61.9585C44.9825 62.067 44.9999 62.1642 45.0343 62.2505L45.0636 62.3071C45.0978 62.3606 45.1476 62.4051 45.214 62.4409C45.3012 62.4879 45.4278 62.5141 45.5988 62.5142C45.7701 62.5142 45.8934 62.4882 45.9738 62.4419L46.0314 62.4028C46.083 62.3615 46.1188 62.3114 46.1398 62.2524L46.1759 62.1138C46.1839 62.0649 46.1876 62.013 46.1876 61.9585C46.1876 61.8717 46.1687 61.7945 46.131 61.7261L46.087 61.6606C46.0187 61.5733 45.9274 61.4946 45.8126 61.4253H45.8116C45.7337 61.3777 45.651 61.3336 45.5646 61.2905ZM45.5968 59.645C45.451 59.645 45.3415 59.6673 45.2648 59.7075L45.2638 59.7085C45.1846 59.7486 45.1312 59.8 45.0997 59.8608C45.068 59.9254 45.0519 59.9935 45.0519 60.0659C45.0519 60.1694 45.0819 60.2567 45.1407 60.3296L45.2491 60.437C45.2902 60.4711 45.3365 60.5034 45.3878 60.5337H45.3868C45.4605 60.5754 45.5382 60.6156 45.6193 60.6558C45.679 60.6272 45.7395 60.5953 45.799 60.5562L45.9259 60.4575C45.9639 60.4219 45.9977 60.3835 46.0275 60.3423C46.0849 60.2629 46.1133 60.1768 46.1134 60.0825C46.1134 60.0089 46.1022 59.9371 46.0792 59.8687L46.0782 59.8677C46.0593 59.8065 46.017 59.7546 45.9454 59.7124L45.9445 59.7114C45.8758 59.6696 45.7624 59.645 45.5968 59.645Z" fill="#001C39" stroke="#001C39" stroke-width="0.1"></path>
+<path d="M37.8982 59.1055V59.6641L37.8953 59.6729L36.657 63.0312L36.6453 63.0635H35.8884L35.9128 62.9961L37.1062 59.7812H35.571V59.1055H37.8982Z" fill="#001C39" stroke="#001C39" stroke-width="0.1"></path>
+<path d="M55.0914 50.0581L55.0543 50.1304L54.3356 51.5542C54.4293 51.5307 54.5342 51.519 54.65 51.519C54.9118 51.519 55.1295 51.5733 55.2994 51.687H55.3004C55.4687 51.7981 55.5916 51.9518 55.6696 52.145C55.7466 52.3343 55.7848 52.5479 55.7848 52.7847C55.7848 53.0148 55.7464 53.2285 55.6696 53.4243C55.593 53.6233 55.4633 53.7836 55.2819 53.9048C55.099 54.0261 54.8544 54.0845 54.5543 54.0845C54.2546 54.0844 54.0089 54.0287 53.8219 53.9116V53.9106C53.6832 53.8224 53.5724 53.7119 53.4908 53.5786L53.4196 53.438C53.3393 53.2435 53.2994 53.028 53.2994 52.7925C53.2994 52.6142 53.3143 52.4452 53.3444 52.2856L53.403 52.0415C53.4265 51.9596 53.4546 51.877 53.486 51.7935V51.7925C53.5502 51.6239 53.6328 51.4403 53.734 51.2427L54.3151 50.0854L54.3287 50.0581H55.0914ZM54.5475 52.1294C54.4268 52.1294 54.3313 52.148 54.2584 52.1831L54.193 52.2241C54.1118 52.286 54.0551 52.3666 54.024 52.4673V52.4683C53.9917 52.5717 53.9753 52.6813 53.9752 52.7974C53.9752 52.9114 53.9922 53.0212 54.026 53.1265L54.0563 53.1968C54.0908 53.2641 54.1386 53.3209 54.2008 53.3677C54.2806 53.4259 54.396 53.4585 54.5524 53.4585C54.7106 53.4585 54.8235 53.4259 54.8981 53.3687L54.9537 53.3188C55.0039 53.2658 55.04 53.2024 55.0621 53.1284V53.1274C55.0946 53.0219 55.111 52.9117 55.111 52.7974C55.1109 52.6809 55.0951 52.571 55.0641 52.4673V52.4663C55.0359 52.3659 54.9824 52.2857 54.903 52.2241L54.902 52.2231C54.826 52.1629 54.7101 52.1294 54.5475 52.1294Z" fill="#001C39" stroke="#001C39" stroke-width="0.1"></path>
+<path d="M45.3197 51.5322C45.4479 51.4783 45.5996 51.4522 45.7728 51.4521C45.9989 51.4521 46.1985 51.5037 46.3685 51.6074C46.5402 51.7113 46.6726 51.8637 46.766 52.0625C46.8598 52.2604 46.9056 52.5019 46.9056 52.7842C46.9056 53.0454 46.8534 53.2753 46.7465 53.4717C46.6397 53.6659 46.4884 53.8165 46.2943 53.9229C46.1014 54.0275 45.8751 54.0791 45.6176 54.0791C45.4606 54.0791 45.3064 54.0625 45.1556 54.0283C45.0072 53.9943 44.8683 53.9482 44.7396 53.8906C44.6132 53.8333 44.5027 53.7704 44.4095 53.7012L44.3812 53.6797L44.392 53.6445L44.5551 53.1602L44.5765 53.0977L44.6312 53.1357C44.7359 53.2079 44.8378 53.2666 44.9369 53.3125L45.0892 53.3721C45.1409 53.3891 45.1933 53.403 45.2465 53.4141C45.3528 53.4361 45.4661 53.4473 45.5853 53.4473C45.7862 53.4472 45.9397 53.3922 46.0521 53.2871C46.1623 53.1841 46.223 53.0225 46.223 52.792C46.223 52.6263 46.1974 52.4964 46.1508 52.4004C46.1154 52.3264 46.0702 52.269 46.016 52.2266L45.9584 52.1885C45.8772 52.1441 45.7802 52.1211 45.6664 52.1211C45.5411 52.1211 45.429 52.1447 45.3295 52.1904C45.2282 52.237 45.1338 52.3018 45.0463 52.3857L45.0199 52.4111L44.9877 52.3936L44.5433 52.1514L44.515 52.1367L44.5179 52.1035L44.683 50.1064L44.6869 50.0605H46.6566V50.7363H45.2504L45.1781 51.6074C45.2231 51.5785 45.2698 51.5525 45.3197 51.5322Z" fill="#001C39" stroke="#001C39" stroke-width="0.1"></path>
+<path d="M37.3156 50.0605L37.2863 50.1299L36.2511 52.5479H36.9806V51.6709H37.5782V52.5479H38.1144V53.2158H37.5782V54.0186H36.9806V53.2158H35.4503V52.582L35.4542 52.5723L36.5597 50.0898L36.5734 50.0605H37.3156Z" fill="#001C39" stroke="#001C39" stroke-width="0.1"></path>
+<path d="M54.5083 40.9502C54.7417 40.9502 54.9488 40.9907 55.1284 41.0732L55.2573 41.1416C55.379 41.2177 55.479 41.3165 55.5562 41.4385C55.66 41.6009 55.7104 41.8007 55.7104 42.0342C55.7104 42.1837 55.6931 42.3237 55.6577 42.4531C55.6213 42.5845 55.5537 42.6939 55.4565 42.7812L55.4575 42.7822C55.4105 42.8252 55.3534 42.8579 55.2886 42.8848C55.3534 42.9148 55.4111 42.9522 55.4614 42.9971L55.5337 43.0693C55.6003 43.1469 55.6507 43.2391 55.6851 43.3447L55.7144 43.4531C55.7397 43.5649 55.7524 43.6893 55.7524 43.8262C55.7524 44.0636 55.7088 44.2748 55.6216 44.458L55.6226 44.459C55.5358 44.6424 55.3989 44.7856 55.2153 44.8887C55.0322 44.9905 54.7995 45.04 54.52 45.04C54.238 45.04 54.0037 44.9947 53.8208 44.9004C53.6391 44.8058 53.5037 44.6631 53.4155 44.4746C53.3282 44.2877 53.2818 44.0562 53.2739 43.7832L53.272 43.7314H53.9341L53.936 43.7803C53.9406 43.9542 53.9646 44.0844 54.0054 44.1738C54.0453 44.2597 54.1054 44.318 54.186 44.3516H54.1851C54.2716 44.3853 54.3872 44.4033 54.5337 44.4033C54.7315 44.4033 54.8626 44.3496 54.9409 44.2549H54.9419C55.0243 44.1568 55.0688 44.0085 55.0688 43.8027C55.0688 43.6339 55.0481 43.5074 55.0103 43.4199V43.4189C54.976 43.3355 54.9118 43.2754 54.812 43.2393H54.811C54.7096 43.2004 54.5567 43.1787 54.3481 43.1787H54.2983V42.5977H54.3481C54.5167 42.5977 54.647 42.586 54.7407 42.5645L54.8608 42.5234C54.8933 42.5076 54.9184 42.4896 54.937 42.4707C54.9775 42.4293 55.0048 42.3765 55.0171 42.3115C55.0302 42.2418 55.0366 42.1592 55.0366 42.0635C55.0366 41.9031 54.9967 41.7871 54.9243 41.708V41.707C54.8569 41.6306 54.7257 41.584 54.5132 41.584C54.3683 41.584 54.2565 41.6029 54.1753 41.6377L54.1743 41.6387C54.0999 41.6698 54.0441 41.7262 54.0083 41.8135V41.8145C53.972 41.9018 53.9517 42.0333 53.9517 42.2129V42.2637H53.2896V42.2129C53.2896 41.8932 53.3395 41.638 53.4429 41.4521C53.547 41.2659 53.6921 41.1334 53.8784 41.0586H53.8794C54.0628 40.9857 54.2728 40.9502 54.5083 40.9502Z" fill="#001C39" stroke="#001C39" stroke-width="0.1"></path>
+<path d="M45.6034 40.9502C45.8861 40.9502 46.1207 41.0006 46.3026 41.1064C46.4827 41.2112 46.616 41.3543 46.701 41.5342C46.7851 41.7101 46.827 41.9071 46.827 42.124C46.827 42.2641 46.8119 42.3943 46.7831 42.5146L46.7499 42.6318C46.7001 42.7809 46.6244 42.9259 46.5243 43.0664C46.4251 43.2055 46.298 43.3527 46.1454 43.5098L46.1464 43.5107L45.3573 44.3398H46.7802V44.9746H44.5165L44.5106 44.9307L44.4413 44.3965L44.4384 44.373L44.454 44.3564L45.6805 43.0244L45.8358 42.8457C45.8811 42.7905 45.9206 42.7393 45.953 42.6924C46.0188 42.5993 46.0637 42.5099 46.0897 42.4248L46.121 42.2852C46.128 42.2359 46.1317 42.1838 46.1317 42.1289C46.1317 41.9328 46.0901 41.7982 46.0165 41.7148V41.7139C45.9464 41.6315 45.8237 41.584 45.6356 41.584C45.4865 41.584 45.3729 41.6062 45.2909 41.6455C45.2322 41.6737 45.1845 41.7173 45.1483 41.7793L45.1161 41.8467C45.0789 41.9474 45.0585 42.0921 45.0585 42.2842V42.334H44.3319V42.2842C44.3319 41.8313 44.431 41.4904 44.6405 41.2734C44.8503 41.0544 45.1752 40.9502 45.6034 40.9502Z" fill="#001C39" stroke="#001C39" stroke-width="0.1"></path>
+<path d="M36.7494 41.0156H37.2455V44.3525H38.1049V44.9736H35.5502V44.3525H36.5306V41.7002L35.6625 41.8232L35.6117 41.8301L35.6058 41.7783L35.5502 41.2412L35.5453 41.1943L35.5922 41.1875L36.7426 41.0156L36.7494 41.0146V41.0156Z" fill="#001C39" stroke="#001C39" stroke-width="0.1"></path>
+</symbol><symbol id="lbnc-ic-pin" viewbox="0 0 94 94">
+<path d="M39.4397 29.5L39.4397 19.4628C39.4397 16.1633 41.9776 13.4844 45.1035 13.4844H45.8798C49.0057 13.4844 51.5436 16.1633 51.5436 19.4628V31.5313H58.5677L58.5663 30.7935" stroke="#001C39" stroke-linejoin="round" stroke-miterlimit="10"></path>
+<path d="M58.5678 31.5312L58.5608 28.0475V19.821C58.5608 12.5296 52.826 6.60938 45.763 6.60938H45.5112C38.4875 6.60938 32.7865 12.4959 32.7865 19.7456V28.0475L32.7865 31.5312H39.4514V28.0475" stroke="#001C39" stroke-linejoin="round" stroke-miterlimit="10"></path>
+<path d="M28.7465 30.6094H62.9828C65.4373 30.6096 67.439 32.5771 67.4818 35.0312L68.307 82.3125C68.3507 84.8279 66.3238 86.8905 63.808 86.8906H27.9213C25.4055 86.8905 23.3786 84.8279 23.4222 82.3125L24.2474 35.0312C24.2903 32.5771 26.292 30.6096 28.7465 30.6094Z" fill="white" stroke="#001C39"></path>
+<path d="M30.6078 34.5H61.059C62.4231 34.5002 63.535 35.5941 63.558 36.958L64.2816 79.958C64.3051 81.3549 63.1797 82.4999 61.7826 82.5H29.8842C28.4871 82.4999 27.3617 81.3549 27.3851 79.958L28.1088 36.958C28.1317 35.5941 29.2437 34.5003 30.6078 34.5Z" fill="white" stroke="#001C39"></path>
+<path d="M40.4828 66.4648C40.4828 67.0171 40.0351 67.4648 39.4828 67.4648H35.8314C35.2791 67.4648 34.8314 67.0171 34.8314 66.4648V57C34.8314 56.4477 35.2791 56 35.8314 56H39.4828C40.0351 56 40.4828 56.4477 40.4828 57V66.4648ZM36.8314 57C36.2791 57 35.8314 57.4477 35.8314 58V58.4883C35.8314 59.0406 36.2791 59.4883 36.8314 59.4883H38.4828C39.0351 59.4883 39.4828 59.0406 39.4828 58.4883V58C39.4828 57.4477 39.0351 57 38.4828 57H36.8314ZM36.8314 60.4883C36.2791 60.4883 35.8314 60.936 35.8314 61.4883V61.9766C35.8314 62.5288 36.2791 62.9766 36.8314 62.9766H38.4828C39.0351 62.9766 39.4828 62.5288 39.4828 61.9766V61.4883C39.4828 60.936 39.0351 60.4883 38.4828 60.4883H36.8314ZM36.8314 63.9766C36.2791 63.9766 35.8314 64.4243 35.8314 64.9766V65.4648C35.8314 66.0171 36.2791 66.4648 36.8314 66.4648H38.4828C39.0351 66.4648 39.4828 66.0171 39.4828 65.4648V64.9766C39.4828 64.4243 39.0351 63.9766 38.4828 63.9766H36.8314ZM43.7484 67.4648C43.1961 67.4648 42.7484 67.0171 42.7484 66.4648V57C42.7484 56.4477 43.1961 56 43.7484 56H47.3998C47.9521 56 48.3998 56.4477 48.3998 57V66.4648C48.3998 67.0171 47.9521 67.4648 47.3998 67.4648H43.7484ZM44.7484 57C44.1961 57 43.7484 57.4477 43.7484 58V58.4883C43.7484 59.0406 44.1961 59.4883 44.7484 59.4883H46.3998C46.9521 59.4883 47.3998 59.0406 47.3998 58.4883V58C47.3998 57.4477 46.9521 57 46.3998 57H44.7484ZM44.7484 60.4883C44.1961 60.4883 43.7484 60.936 43.7484 61.4883V61.9766C43.7484 62.5288 44.1961 62.9766 44.7484 62.9766H46.3998C46.9521 62.9766 47.3998 62.5288 47.3998 61.9766V61.4883C47.3998 60.936 46.9521 60.4883 46.3998 60.4883H44.7484ZM44.7484 63.9766C44.1961 63.9766 43.7484 64.4243 43.7484 64.9766V65.4648C43.7484 66.0171 44.1961 66.4648 44.7484 66.4648H46.3998C46.9521 66.4648 47.3998 66.0171 47.3998 65.4648V64.9766C47.3998 64.4243 46.9521 63.9766 46.3998 63.9766H44.7484ZM51.182 67.4648C50.6297 67.4648 50.182 67.0171 50.182 66.4648V57C50.182 56.4477 50.6297 56 51.182 56H54.8334C55.3857 56 55.8334 56.4477 55.8334 57V66.4648C55.8334 67.0171 55.3857 67.4648 54.8334 67.4648H51.182ZM52.182 57C51.6297 57 51.182 57.4477 51.182 58V58.4883C51.182 59.0406 51.6297 59.4883 52.182 59.4883H53.8334C54.3857 59.4883 54.8334 59.0406 54.8334 58.4883V58C54.8334 57.4477 54.3857 57 53.8334 57H52.182ZM52.182 60.4883C51.6297 60.4883 51.182 60.936 51.182 61.4883V61.9766C51.182 62.5288 51.6297 62.9766 52.182 62.9766H53.8334C54.3857 62.9766 54.8334 62.5288 54.8334 61.9766V61.4883C54.8334 60.936 54.3857 60.4883 53.8334 60.4883H52.182ZM52.182 63.9766C51.6297 63.9766 51.182 64.4243 51.182 64.9766V65.4648C51.182 66.0171 51.6297 66.4648 52.182 66.4648H53.8334C54.3857 66.4648 54.8334 66.0171 54.8334 65.4648V64.9766C54.8334 64.4243 54.3857 63.9766 53.8334 63.9766H52.182Z" fill="#001C39"></path>
+<path d="M48.3334 34.5V41C48.3334 41.8284 47.6618 42.5 46.8334 42.5H44.8334C44.0049 42.5 43.3334 41.8284 43.3334 41V34.5H48.3334Z" stroke="black"></path>
+</symbol></svg><div class="lbnc">
+<div class="lbnc-head">
+<h2>Why Lubn Lockbox?</h2>
+<p>Unlike Bluetooth lockboxes that rely on nearby phones or PINs, Lubn is a cellular, AI-powered platform that delivers real-time visibility, automation, and secure verification—far beyond what Bluetooth or PIN lockboxes can offer.</p>
+</div>
+<div aria-label="Compare Lubn Lockbox by category" class="lbnc-tabs" role="tablist">
+<button aria-controls="lbnc-panel-conn" aria-selected="true" class="lbnc-tab" id="lbnc-tab-conn" role="tab" type="button">Connectivity</button>
+<button aria-controls="lbnc-panel-access" aria-selected="false" class="lbnc-tab" id="lbnc-tab-access" role="tab" type="button">Access Control</button>
+<button aria-controls="lbnc-panel-bi" aria-selected="false" class="lbnc-tab" id="lbnc-tab-bi" role="tab" type="button">Business Intelligence</button>
+</div>
+<!-- Reused in every panel's <thead> — identical markup each time so the
+       highlighted column and icons line up the same way on every tab. -->
+<!-- ============ CONNECTIVITY ============ -->
+<div aria-labelledby="lbnc-tab-conn" class="lbnc-panel" id="lbnc-panel-conn" role="tabpanel">
+<div class="lbnc-scroll">
+<table class="lbnc-table">
+<colgroup><col class="lbnc-col-label"/><col/><col/><col/></colgroup>
+<thead>
+<tr>
+<th scope="col"><span class="lbnc-sr">Feature</span></th>
+<th class="lbnc-hl" scope="col">
+<div class="lbnc-pcard">
+<span class="lbnc-pname">Lubn AI Lockbox 3</span>
+<span class="lbnc-icon" data-icon="lubn">
+<svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-lubn"></use></svg>
+</span>
+</div>
+</th>
+<th scope="col">
+<div class="lbnc-pcard">
+<span class="lbnc-pname">BLE Lockbox</span>
+<span class="lbnc-icon" data-icon="ble">
+<svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-ble"></use></svg>
+</span>
+</div>
+</th>
+<th scope="col">
+<div class="lbnc-pcard">
+<span class="lbnc-pname">PIN Lockbox</span>
+<span class="lbnc-icon" data-icon="pin">
+<svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-pin"></use></svg>
+</span>
+</div>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">Connectivity</th>
+<td class="lbnc-hl" data-label="Lubn AI Lockbox 3"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-lubn"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">Lubn AI Lockbox 3: </span><b>LTE cellular</b><span>Provides real-time data anywhere with coverage.</span></span></td>
+<td data-label="BLE Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-ble"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">BLE Lockbox: </span><b>Bluetooth</b><span>Requires nearby smartphone and Bluetooth pairing. Visitor's phone also needs cellular connectivity.</span></span></td>
+<td data-label="PIN Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-pin"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">PIN Lockbox: </span><b>No</b><span>No real-time access data can be provided.</span></span></td>
+</tr>
+<tr>
+<th scope="row">Remote Access</th>
+<td class="lbnc-hl" data-label="Lubn AI Lockbox 3"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-lubn"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">Lubn AI Lockbox 3: </span><b>Yes from anywhere</b><span>Unlock remotely and monitor access via cloud from anywhere in the world.</span></span></td>
+<td data-label="BLE Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-ble"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">BLE Lockbox: </span><b>Only in proximity</b><span>Must be within 10 meter Bluetooth range. Some models connect to a Wi-Fi hub, requiring extra devices and costly setup.</span></span></td>
+<td data-label="PIN Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-pin"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">PIN Lockbox: </span><b>No</b><span class="lbnc-dash">—</span></span></td>
+</tr>
+<tr>
+<th scope="row">Offline Access</th>
+<td class="lbnc-hl" data-label="Lubn AI Lockbox 3"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-lubn"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">Lubn AI Lockbox 3: </span><b>Yes</b><span>Works in low or no signal areas via proprietary dynamic QR algorithm.</span></span></td>
+<td data-label="BLE Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-ble"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">BLE Lockbox: </span><b>No</b><span>Dependent on phone signal for app sign-in — visitors risk lockout without connectivity.</span></span></td>
+<td data-label="PIN Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-pin"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">PIN Lockbox: </span><b>Yes</b><span>Works offline, but no logging.</span></span></td>
+</tr>
+<tr>
+<th scope="row">GPS Tracking</th>
+<td class="lbnc-hl" data-label="Lubn AI Lockbox 3"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-lubn"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">Lubn AI Lockbox 3: </span><b>Yes</b><span>Optional GPS module for the device location on map.</span></span></td>
+<td data-label="BLE Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-ble"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">BLE Lockbox: </span><b>No</b><span class="lbnc-dash">—</span></span></td>
+<td data-label="PIN Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-pin"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">PIN Lockbox: </span><b>No</b><span class="lbnc-dash">—</span></span></td>
+</tr>
+<tr>
+<th scope="row">Data Security</th>
+<td class="lbnc-hl" data-label="Lubn AI Lockbox 3"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-lubn"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">Lubn AI Lockbox 3: </span><b>Strong</b><span>Encrypted cloud storage and communication.</span></span></td>
+<td data-label="BLE Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-ble"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">BLE Lockbox: </span><b>Weak</b><span>Dependent on app security; man-in-the-middle (MitM) risk.</span></span></td>
+<td data-label="PIN Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-pin"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">PIN Lockbox: </span><b>No</b><span class="lbnc-dash">—</span></span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- ============ ACCESS CONTROL ============ -->
+<div aria-labelledby="lbnc-tab-access" class="lbnc-panel" hidden="" id="lbnc-panel-access" role="tabpanel">
+<div class="lbnc-scroll">
+<table class="lbnc-table">
+<colgroup><col class="lbnc-col-label"/><col/><col/><col/></colgroup>
+<thead>
+<tr>
+<th scope="col"><span class="lbnc-sr">Feature</span></th>
+<th class="lbnc-hl" scope="col">
+<div class="lbnc-pcard">
+<span class="lbnc-pname">Lubn AI Lockbox 3</span>
+<span class="lbnc-icon" data-icon="lubn">
+<svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-lubn"></use></svg>
+</span>
+</div>
+</th>
+<th scope="col">
+<div class="lbnc-pcard">
+<span class="lbnc-pname">BLE Lockbox</span>
+<span class="lbnc-icon" data-icon="ble">
+<svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-ble"></use></svg>
+</span>
+</div>
+</th>
+<th scope="col">
+<div class="lbnc-pcard">
+<span class="lbnc-pname">PIN Lockbox</span>
+<span class="lbnc-icon" data-icon="pin">
+<svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-pin"></use></svg>
+</span>
+</div>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">Access Control</th>
+<td class="lbnc-hl" data-label="Lubn AI Lockbox 3"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-lubn"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">Lubn AI Lockbox 3: </span><b>Dynamic QR code, App</b><span>Managers can grant or revoke access with multi-role permissions. Visitors can access with web-based itineraries if permitted.</span></span></td>
+<td data-label="BLE Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-ble"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">BLE Lockbox: </span><b>App</b><span>Basic app-based access only and requires visitors to install an additional App. Not friendly for contractors or one-time visitors.</span></span></td>
+<td data-label="PIN Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-pin"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">PIN Lockbox: </span><b>PIN</b><span>PINs can be easily shared, compromising security. Managing and recalling codes for multiple lockboxes is prone to error and frustration.</span></span></td>
+</tr>
+<tr>
+<th scope="row">Permission Control</th>
+<td class="lbnc-hl" data-label="Lubn AI Lockbox 3"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-lubn"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">Lubn AI Lockbox 3: </span><b>Strong</b><span>Role-based and time-limited digital keys; adjustable remotely to feature level. SSO is supported.</span></span></td>
+<td data-label="BLE Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-ble"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">BLE Lockbox: </span><b>Weak</b><span>Basic user permission shared via app; limited time control.</span></span></td>
+<td data-label="PIN Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-pin"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">PIN Lockbox: </span><b>No</b><span>Anyone with the PIN can access. PIN must be changed manually.</span></span></td>
+</tr>
+<tr>
+<th scope="row">Event Notifications</th>
+<td class="lbnc-hl" data-label="Lubn AI Lockbox 3"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-lubn"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">Lubn AI Lockbox 3: </span><b>Real-time</b><span>Managers are notified in real-time for check-in, check-out, delayed, overtime, no-show, tampered, non-compliant access, etc. Visitors are notified to return keys when their time is up.</span></span></td>
+<td data-label="BLE Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-ble"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">BLE Lockbox: </span><b>Delayed &amp; limited</b><span>Managers are only notified of unlock events when a visitor's phone pairs with the lockbox via Bluetooth. The system has no visibility into key returns. Other events are not logged.</span></span></td>
+<td data-label="PIN Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-pin"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">PIN Lockbox: </span><b>No</b><span class="lbnc-dash">—</span></span></td>
+</tr>
+<tr>
+<th scope="row">Visual Verification</th>
+<td class="lbnc-hl" data-label="Lubn AI Lockbox 3"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-lubn"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">Lubn AI Lockbox 3: </span><b>Yes</b><span>Built-in camera captures check-in photo for visual proof.</span></span></td>
+<td data-label="BLE Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-ble"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">BLE Lockbox: </span><b>No</b><span class="lbnc-dash">—</span></span></td>
+<td data-label="PIN Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-pin"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">PIN Lockbox: </span><b>No</b><span class="lbnc-dash">—</span></span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- ============ BUSINESS INTELLIGENCE ============ -->
+<div aria-labelledby="lbnc-tab-bi" class="lbnc-panel" hidden="" id="lbnc-panel-bi" role="tabpanel">
+<div class="lbnc-scroll">
+<table class="lbnc-table">
+<colgroup><col class="lbnc-col-label"/><col/><col/><col/></colgroup>
+<thead>
+<tr>
+<th scope="col"><span class="lbnc-sr">Feature</span></th>
+<th class="lbnc-hl" scope="col">
+<div class="lbnc-pcard">
+<span class="lbnc-pname">Lubn AI Lockbox 3</span>
+<span class="lbnc-icon" data-icon="lubn">
+<svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-lubn"></use></svg>
+</span>
+</div>
+</th>
+<th scope="col">
+<div class="lbnc-pcard">
+<span class="lbnc-pname">BLE Lockbox</span>
+<span class="lbnc-icon" data-icon="ble">
+<svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-ble"></use></svg>
+</span>
+</div>
+</th>
+<th scope="col">
+<div class="lbnc-pcard">
+<span class="lbnc-pname">PIN Lockbox</span>
+<span class="lbnc-icon" data-icon="pin">
+<svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-pin"></use></svg>
+</span>
+</div>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">PMS</th>
+<td class="lbnc-hl" data-label="Lubn AI Lockbox 3"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-lubn"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">Lubn AI Lockbox 3: </span><b>Premium</b><span>Integrated scheduling, automation, visitor management, and more. Single subscription covers both data network and PMS, lowering overall costs.</span></span></td>
+<td data-label="BLE Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-ble"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">BLE Lockbox: </span><b>Basic</b><span>Typically standalone mobile app. PMS is a separate 3rd party software service with additional fees.</span></span></td>
+<td data-label="PIN Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-pin"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">PIN Lockbox: </span><b>No</b><span>Basic hardware-driven app</span></span></td>
+</tr>
+<tr>
+<th scope="row">AI</th>
+<td class="lbnc-hl" data-label="Lubn AI Lockbox 3"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-lubn"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">Lubn AI Lockbox 3: </span><b>Yes</b><span>AI face detection &amp; Virtual Agent for automation</span></span></td>
+<td data-label="BLE Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-ble"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">BLE Lockbox: </span><b>No</b><span class="lbnc-dash">—</span></span></td>
+<td data-label="PIN Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-pin"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">PIN Lockbox: </span><b>No</b><span class="lbnc-dash">—</span></span></td>
+</tr>
+<tr>
+<th scope="row">Software Integration</th>
+<td class="lbnc-hl" data-label="Lubn AI Lockbox 3"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-lubn"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">Lubn AI Lockbox 3: </span><b>Yes</b><span>Lubn works closely with Enterprise customers for integrating Lubn with their internal system and APIs.</span></span></td>
+<td data-label="BLE Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-ble"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">BLE Lockbox: </span><b>No</b><span class="lbnc-dash">—</span></span></td>
+<td data-label="PIN Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-pin"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">PIN Lockbox: </span><b>No</b><span class="lbnc-dash">—</span></span></td>
+</tr>
+<tr>
+<th scope="row">Best Use Case</th>
+<td class="lbnc-hl" data-label="Lubn AI Lockbox 3"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-lubn"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">Lubn AI Lockbox 3: </span><b>Enterprise</b><span>Remote property management, and enterprise-level access control with scale</span></span></td>
+<td data-label="BLE Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-ble"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">BLE Lockbox: </span><b>Small Business</b><span>Small teams or local operations</span></span></td>
+<td data-label="PIN Lockbox"><span aria-hidden="true" class="lbnc-cell-icon"><svg viewbox="0 0 94 94" xmlns="http://www.w3.org/2000/svg"><use href="#lbnc-ic-pin"></use></svg></span><span class="lbnc-cell-text"><span class="lbnc-sr">PIN Lockbox: </span><b>Individual</b><span>Occasional use for low-security environments</span></span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<script>
+(function(){
+  var root = document.currentScript.previousElementSibling;
+  if(!root || !root.classList || !root.classList.contains('lbnc')){
+    // Fallback in case PageFly reorders nodes: grab the last .lbnc on the page.
+    var all = document.querySelectorAll('.lbnc');
+    root = all[all.length - 1];
+  }
+  if(!root) return;
+
+  var tabs = root.querySelectorAll('.lbnc-tab');
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){ select(tab.id); });
+    tab.addEventListener('keydown', function(e){
+      if(e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault();
+      var idx = Array.prototype.indexOf.call(tabs, tab);
+      var next = tabs[(idx + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+      next.focus();
+      select(next.id);
+    });
+  });
+
+  function select(id){
+    tabs.forEach(function(t){
+      var on = t.id === id;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      var panel = root.querySelector('#' + t.getAttribute('aria-controls'));
+      if(panel) panel.hidden = !on;
+    });
+  }
+})();
+</script>

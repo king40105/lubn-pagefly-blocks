@@ -1,0 +1,1333 @@
+<!--
+  Lubn — Pricing page block  (all-in-one)
+  ────────────────────────────────────────────────────────────────────────
+  ONE HTML/Liquid element for /pages/pricing (PageFly template pf-dece6aa5).
+  Replaces the old device block AND the old PageFly plans-table section.
+
+  Contains, in order:
+    1. Buy / Rent panel — variants, quantity, accessories, gallery, lightbox
+    2. PMS Data & Showing Suite plans table  (carries id="Plans")
+    3. Hardware specifications
+
+  Supersedes pagefly-buy-rent-block.html, pagefly-pms-plans-table.html and
+  pagefly-tech-specs.html. Paste this one; delete the old PageFly plans
+  section so nothing else on the page uses id="Plans".
+
+  BUY   Non-GPS $269.95 · GPS $299.95 · free shipping
+  RENT  $1.95/day, billed monthly $58.50 · $150 deposit · free shipping
+
+  IDS TO UPDATE IF THINGS CHANGE
+    Non-GPS variant ...... 43280098459691
+    GPS variant .......... 43280098426923
+    Key Storage .......... 29105746083914
+    Wall-mount kit ....... 43285090304043
+    Rental unit .......... 44538186498091
+    Rental deposit ....... 44538201079851
+    Selling plan ......... 9805332523
+
+  ────────────────────────────────────────────────────────────────────────
+  CHANGE LOG
+    [fix] PMS plan table: price row (.lbnp-meta) is now sticky along with
+          the name row (.lbnp-names), so both stay visible together while
+          scrolling the feature list — previously only names stuck and
+          prices scrolled away. Offset is computed in JS from the actual
+          rendered height of the name row, so it keeps working if the
+          plan names ever wrap to two lines or the font size changes.
+    [fix] Removed the 769–1023px horizontal-scroll band on the table.
+          overflow-x:auto on an ancestor makes it a scroll container,
+          which silently breaks position:sticky for everything inside —
+          that's why sticky wasn't working at tablet widths. The mobile
+          compact-table styling (768px breakpoint) is now applied up to
+          1023px instead, so tablet widths get the compact layout rather
+          than a scrolling table, and sticky works at every width.
+    [fix] Per-plan description under each plan name now collapses once the
+          header is actually stuck to the top, so the pinned bar stays
+          compact while scrolling — it still shows normally the rest of
+          the time.
+    [fix] --lbnp-top (the sticky offset) is now auto-detected from your
+          site's own nav at runtime, and — importantly — recalculated on
+          every scroll frame rather than only on resize/load. Previously a
+          stale offset (measured before an announcement bar collapsed, or
+          before a "shrink on scroll" nav finished shrinking) could leave
+          the table reserving more space than the nav actually occupied,
+          showing a gap with a table row visible through it. Recalculating
+          continuously keeps it matched to the nav's real height at all
+          times, and still returns 0 on breakpoints where the nav isn't
+          sticky at all (e.g. Lubn's mobile nav).
+    [fix] "Stuck" detection swapped from IntersectionObserver+sentinel to a
+          direct getBoundingClientRect() comparison on scroll — the sentinel
+          approach proved unreliable once PageFly's own wrapper markup was
+          in the mix.
+-->
+
+<script>
+/* Runs before the markup below is parsed. On a product page that isn't in the
+   list, it flags <html> so the CSS hides the block before it ever paints.
+   Everywhere else — including the PageFly editor, where custom scripts don't
+   run — nothing is flagged and the block stays visible and editable. */
+(function(){
+  var m = location.pathname.match(/\/products\/([^\/?#]+)/);
+  var SHOW_ON = ['ai-lockbox-3', 'ai-lockbox-3-gps-monthly-rental'];
+  if(m && SHOW_ON.indexOf(m[1]) === -1){
+    document.documentElement.className += ' lbn-no-block';
+  }
+})();
+</script>
+
+<style>
+.lbn-no-block .lbn-rentbuy,
+.lbn-no-block .lbnp,
+.lbn-rentbuy{--lbn-ink:#111;--lbn-mut:#6b6b6b;--lbn-line:#e3e3e3;--lbn-soft:#f6f6f4;--lbn-blue-bg:#eaf2fb;--lbn-blue-ink:#0c447c;font-family:inherit;color:var(--lbn-ink);max-width:1080px;margin:0 auto;padding:8px 0;box-sizing:border-box}
+.lbn-rentbuy *,.lbn-rentbuy *::before,.lbn-rentbuy *::after{box-sizing:border-box}
+.lbn-tabs{display:inline-flex;background:var(--lbn-soft);border:1px solid var(--lbn-line);border-radius:999px;padding:4px;margin:0 0 22px}
+.lbn-tab{appearance:none;border:0;background:transparent;font:inherit;font-size:15px;line-height:1;color:var(--lbn-mut);padding:10px 28px;border-radius:999px;cursor:pointer;transition:background .15s,color .15s}
+.lbn-tab[aria-selected="true"]{background:#fff;color:var(--lbn-ink);font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.lbn-tab:focus-visible{outline:2px solid var(--lbn-ink);outline-offset:2px}
+.lbn-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:start}
+.lbn-gallery{align-self:start}
+.lbn-media{background:#eceef2;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;padding:7%;cursor:zoom-in}
+.lbn-media img{max-width:100%;max-height:100%;width:auto;height:auto;display:block;object-fit:contain;transition:transform .18s}
+.lbn-media:hover img{transform:scale(1.03)}
+.lbn-media:focus-visible{outline:2px solid var(--lbn-ink);outline-offset:3px}
+.lbn-thumbs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+.lbn-thumb{appearance:none;border:0;padding:8%;margin:0;background:#eceef2;border-radius:12px;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;cursor:zoom-in;transition:box-shadow .15s}
+.lbn-thumb img{max-width:100%;max-height:100%;width:auto;height:auto;display:block;object-fit:contain;transition:transform .18s}
+.lbn-thumb:hover img{transform:scale(1.06)}
+.lbn-thumb:hover{box-shadow:0 2px 12px rgba(0,0,0,.12)}
+.lbn-thumb:focus-visible{outline:2px solid var(--lbn-ink);outline-offset:3px}
+.lbn-thumb.is-video{position:relative;padding:0;overflow:hidden;cursor:pointer}
+.lbn-thumb.is-video img{width:100%;height:100%;object-fit:cover;border-radius:12px}
+.lbn-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.lbn-play span{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center}
+.lbn-play span::after{content:"";width:0;height:0;margin-left:3px;border-left:13px solid #111;border-top:8px solid transparent;border-bottom:8px solid transparent}
+.lbn-lb-inner video{max-width:100%;max-height:70vh;width:auto;height:auto;display:block;border-radius:8px;background:#000}
+.lbn-lb-inner .lbn-lb-video{display:none}
+.lbn-lb-inner.is-video img{display:none}
+.lbn-lb-inner.is-video .lbn-lb-video{display:block}
+.lbn-lb-inner.is-video{max-width:min(900px,94vw)}
+.lbn-panel[hidden]{display:none}
+/* Used on both an <h1> (Buy) and a <p> (Rent). Every property that a theme
+   typically sets differently for headings is pinned here — otherwise the two
+   render at different heights and the price below jumps when you toggle. */
+.lbn-eyebrow{font-family:inherit;font-size:15px;font-weight:400;line-height:1.4;letter-spacing:normal;text-transform:none;color:var(--lbn-mut);margin:0 0 6px;padding:0}
+.lbn-price{display:flex;align-items:baseline;gap:2px;margin:0}
+.lbn-price-lg{font-size:52px;font-weight:500;line-height:1.05;letter-spacing:-.01em}
+.lbn-price-sm{font-size:20px;font-weight:500;line-height:1}
+.lbn-price-unit{font-size:20px;color:var(--lbn-mut);margin-left:5px}
+/* One rule for both panels' note line. Identical margin AND a reserved
+   two-line height, so the checkmark list below starts at the same point
+   whether the text wraps or not — otherwise switching Buy/Rent shifts
+   everything under it. */
+.lbn-sub,.lbn-daily{font-size:13px;color:var(--lbn-mut);margin:8px 0 0;line-height:1.5;min-height:39px}
+.lbn-daily b{font-weight:500;color:var(--lbn-ink)}
+
+.lbn-opts{display:grid;gap:10px;margin:20px 0 0}
+.lbn-opt{display:flex;align-items:center;gap:12px;border:1px solid var(--lbn-line);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .15s,background .15s}
+.lbn-opt:hover{border-color:#bdbdbd}
+.lbn-opt input{position:absolute;opacity:0;pointer-events:none}
+.lbn-dot{flex:0 0 auto;width:18px;height:18px;border:1.5px solid #bdbdbd;border-radius:50%;position:relative;transition:border-color .15s}
+.lbn-opt.is-on{border-color:var(--lbn-ink);background:#fafafa}
+.lbn-opt.is-on .lbn-dot{border-color:var(--lbn-ink)}
+.lbn-opt.is-on .lbn-dot::after{content:"";position:absolute;inset:3px;background:var(--lbn-ink);border-radius:50%}
+.lbn-opt-name{flex:1 1 auto;font-size:15px}
+.lbn-opt-name small{display:block;font-size:13px;color:var(--lbn-mut);margin-top:2px}
+.lbn-opt-price{font-size:15px;font-weight:500;white-space:nowrap}
+
+.lbn-qtyrow{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:20px 0 0}
+.lbn-qtylabel{font-size:15px}
+.lbn-stepper{display:inline-flex;align-items:center;border:1px solid var(--lbn-line);border-radius:8px;overflow:hidden}
+.lbn-step{appearance:none;border:0;background:#fff;font:inherit;font-size:18px;line-height:1;color:var(--lbn-ink);width:40px;height:40px;cursor:pointer;transition:background .15s}
+.lbn-step:hover{background:var(--lbn-soft)}
+.lbn-step:disabled{color:#c9c9c9;cursor:not-allowed;background:#fff}
+.lbn-step:focus-visible{outline:2px solid var(--lbn-ink);outline-offset:-2px}
+.lbn-qty{width:46px;height:40px;text-align:center;border:0;border-left:1px solid var(--lbn-line);border-right:1px solid var(--lbn-line);font:inherit;font-size:15px;color:var(--lbn-ink);-moz-appearance:textfield}
+.lbn-qty::-webkit-outer-spin-button,.lbn-qty::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+.lbn-acc{border-top:1px solid var(--lbn-line);margin-top:22px;padding-top:18px}
+.lbn-acc-h{font-size:13px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--lbn-mut);margin:0 0 12px}
+.lbn-accrow{display:flex;align-items:center;gap:12px;padding:8px 0}
+.lbn-accrow img{flex:0 0 auto;width:46px;height:46px;object-fit:contain;background:var(--lbn-soft);border-radius:8px;cursor:zoom-in;transition:transform .15s,box-shadow .15s}
+.lbn-accrow img:hover,.lbn-accrow img:focus-visible{transform:scale(1.08);box-shadow:0 2px 10px rgba(0,0,0,.14);outline:none}
+
+.lbn-lb{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:32px;background:rgba(17,17,17,.72);opacity:0;pointer-events:none;transition:opacity .18s}
+.lbn-lb.is-open{opacity:1;pointer-events:auto}
+.lbn-lb-inner{background:#fff;border-radius:16px;padding:24px;max-width:min(560px,90vw);max-height:86vh;display:flex;flex-direction:column;align-items:center;gap:14px;transform:scale(.97);transition:transform .18s}
+.lbn-lb.is-open .lbn-lb-inner{transform:scale(1)}
+.lbn-lb-inner img{max-width:100%;max-height:70vh;width:auto;height:auto;object-fit:contain;display:block}
+.lbn-lb-cap{font-size:15px;text-align:center;color:var(--lbn-ink);margin:0}
+.lbn-lb-cap:empty{display:none}
+.lbn-lb-cap small{display:block;font-size:13px;color:var(--lbn-mut);margin-top:3px}
+.lbn-lb-x{position:absolute;top:18px;right:18px;width:40px;height:40px;border:0;border-radius:50%;background:rgba(255,255,255,.92);color:#111;font:inherit;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
+.lbn-lb-x:hover{background:#fff}
+.lbn-lb-x:focus-visible{outline:2px solid #fff;outline-offset:2px}
+/* [feature] Prev/Next arrows. Same circular-button treatment as the close
+   button, positioned at the vertical center of either edge. The chevron
+   itself is a CSS border-triangle (same technique already used for the
+   video play icon above) rather than a new SVG/icon dependency. Hidden
+   entirely — not just disabled — when a page only has one zoomable item,
+   since there's nowhere for them to navigate to. */
+.lbn-lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.92);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;transition:background .15s}
+.lbn-lb-nav:hover{background:#fff}
+.lbn-lb-nav:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.lbn-lb-nav[hidden]{display:none}
+.lbn-lb-prev{left:18px}
+.lbn-lb-next{right:18px}
+.lbn-lb-prev::before{content:"";width:0;height:0;border-top:8px solid transparent;border-bottom:8px solid transparent;border-right:10px solid #111;margin-left:-2px}
+.lbn-lb-next::before{content:"";width:0;height:0;border-top:8px solid transparent;border-bottom:8px solid transparent;border-left:10px solid #111;margin-right:-2px}
+/* On phones, swipe covers navigation (see the touchstart/touchend handlers
+   below) and there isn't enough width for a photo plus two 44px circular
+   buttons without the buttons sitting on top of the image — so the arrows
+   are just hidden here rather than shrunk to fit. */
+@media (max-width:640px){
+  .lbn-lb-nav{display:none}
+}
+
+.lbn-accname{flex:1 1 auto;font-size:15px;line-height:1.4}
+.lbn-accname[data-zoom]{cursor:zoom-in}
+.lbn-accname[data-zoom]:hover,.lbn-accname[data-zoom]:focus-visible{text-decoration:underline;text-underline-offset:2px;outline:none}
+.lbn-accname small{display:block;font-size:13px;color:var(--lbn-mut)}
+.lbn-mini{display:inline-flex;align-items:center;border:1px solid var(--lbn-line);border-radius:8px;overflow:hidden;flex:0 0 auto}
+.lbn-mini .lbn-step{width:32px;height:32px;font-size:16px}
+.lbn-mini .lbn-qty{width:34px;height:32px;font-size:14px}
+
+.lbn-total{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin:22px 0 14px;padding-top:16px;border-top:1px solid var(--lbn-line);font-size:15px}
+.lbn-total b{font-size:20px;font-weight:500}
+.lbn-cta{display:block;width:100%;text-align:center;background:var(--lbn-ink);color:#fff;border:0;text-decoration:none;font:inherit;font-size:16px;font-weight:500;padding:15px 24px;border-radius:8px;cursor:pointer;transition:opacity .15s}
+.lbn-cta:hover{opacity:.85;color:#fff}
+.lbn-cta:disabled{opacity:.5;cursor:wait}
+.lbn-cta:focus-visible{outline:2px solid var(--lbn-ink);outline-offset:3px}
+.lbn-err{font-size:13px;color:#a32d2d;margin:10px 0 0}
+
+.lbn-callout{background:var(--lbn-blue-bg);border-radius:10px;padding:14px 16px;margin:18px 0}
+.lbn-callout p{margin:0;font-size:14px;line-height:1.6;color:var(--lbn-blue-ink)}
+.lbn-callout p+p{margin-top:6px}
+.lbn-callout b{font-weight:600}
+.lbn-list{list-style:none;margin:18px 0 0;padding:0}
+.lbn-list li{position:relative;padding-left:26px;font-size:15px;line-height:1.55;margin-bottom:9px;color:#333}
+.lbn-list li::before{content:"";position:absolute;left:2px;top:6px;width:13px;height:8px;border-left:2px solid #1d9e75;border-bottom:2px solid #1d9e75;transform:rotate(-45deg)}
+.lbn-fine{font-size:12.5px;line-height:1.6;color:var(--lbn-mut);margin:18px 0 0}
+.lbn-fine strong{font-weight:500;color:var(--lbn-ink)}
+.lbn-note{font-size:14px;line-height:1.6;color:var(--lbn-mut);margin:28px 0 0;padding-top:20px;border-top:1px solid var(--lbn-line)}
+
+
+@media (max-width:749px){
+.lbn-grid{grid-template-columns:1fr;gap:34px}
+.lbn-media{aspect-ratio:8/3;padding:22px}
+.lbn-tabs{display:flex;width:-moz-fit-content;width:fit-content;margin:0 auto 30px}
+.lbn-price-lg{font-size:44px}
+.lbn-tab{padding:11px 30px;font-size:15px}
+}
+
+.lbnp{--i:#111;--m:#6b6b6b;--l:#e3e3e3;--soft:#f6f6f4;font-family:inherit;color:var(--i);max-width:1080px;margin:0 auto;box-sizing:border-box}
+.lbnp *,.lbnp *::before,.lbnp *::after{box-sizing:border-box}
+/* Clear anything the theme or PageFly applies to tables, so only our
+   horizontal rules remain. Must sit ABOVE the border-bottom rule below. */
+.lbnp-scroll{border:0 !important;border-radius:0 !important;background:none !important;box-shadow:none !important}
+.lbnp table,.lbnp thead,.lbnp tbody,.lbnp tfoot,.lbnp tr,.lbnp th,.lbnp td{border:0 !important;background:none !important;box-shadow:none !important;border-radius:0 !important;margin:0}
+.lbnp-head{margin:0 0 22px}
+.lbnp-head h2{font-size:24px;font-weight:500;margin:0 0 6px}
+.lbnp-head p{font-size:15px;color:var(--m);margin:0;line-height:1.6}
+/* No overflow container by default — an overflow ancestor becomes the
+   scroll context and stops position:sticky from working against the page.
+   [fix] The 769–1023px horizontal-scroll band that used to live here has
+   been removed: overflow-x:auto turned this into a scroll container and
+   silently broke position:sticky for the whole table at those widths.
+   Compact styling now covers that range instead — see the 1023px query
+   near the bottom of this stylesheet. */
+.lbnp-scroll{overflow:visible}
+.lbnp-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.lbnp table{border-collapse:separate;border-spacing:0;width:100%;min-width:860px;font-size:14px;table-layout:fixed}
+.lbnp col.f{width:26%}
+.lbnp col.p{width:18.5%}
+.lbnp th,.lbnp td{text-align:center;padding:12px 14px;vertical-align:middle;border-bottom:1px solid var(--l) !important;word-wrap:break-word}
+/* Only the plan NAMES stay pinned; descriptions and prices scroll away.
+   Solid white background so rows passing underneath stay hidden.
+   --lbnp-top is the offset for any sticky site header — raise it if the
+   names end up tucked behind your nav. */
+/* Your theme sets body{overflow-x:hidden}, which computes to
+   "hidden auto" and turns <body> into a scroll container. That silently
+   disables position:sticky for everything inside it — verified in Chrome on
+   the live page.
+
+   [fix] Removed the body{overflow-x:clip} override entirely — it was
+   touching <body> site-wide (even after being scoped to this page only,
+   it was still a body-level change), and full-bleed sections on other
+   PageFly pages rely on content overflowing past the body's own boundary,
+   which this rule clipped. Trade-off: the sticky table header below
+   (.lbnp-names / .lbnp-meta) will likely stop sticking on this page,
+   since the theme's own overflow-x:hidden on <body> breaks position:sticky
+   for anything nested inside it. The real fix is changing the theme's own
+   CSS (its overflow-x:hidden → overflow-x:clip on <body>, site-wide,
+   deliberately, once) rather than working around it per-block. */
+.lbnp{--lbnp-top:0px}
+/* !important on the backgrounds is deliberate: the theme reset above uses
+   background:none !important, which would otherwise leave the pinned row
+   transparent and let feature rows show through it. */
+.lbnp thead .lbnp-names th{position:sticky;top:var(--lbnp-top);z-index:4;background:#fff !important;vertical-align:bottom;padding:16px 14px 5px;border-bottom:0 !important;box-shadow:0 2px 0 #fff !important}
+/* [fix] Price/description row now sticks directly beneath the name row
+   instead of scrolling away. --lbnp-meta-top is set by JS to the actual
+   rendered height of the name row (plus --lbnp-top), so this keeps lining
+   up correctly even if plan names wrap or the font size changes later. */
+.lbnp thead .lbnp-meta td{position:sticky;top:var(--lbnp-meta-top,64px);z-index:3;background:#fff !important;vertical-align:top;padding:0 14px 16px;box-shadow:0 2px 0 #fff !important;transition:padding-top .12s}
+/* [fix] Once stuck, the description above collapses to height:0, so the
+   price would otherwise sit flush against the name row with no breathing
+   room — add the gap back only in that state. */
+.lbnp.is-stuck thead .lbnp-meta td{padding-top:10px}
+.lbnp tbody th{text-align:left;font-weight:400;color:var(--i);background:#fff}
+.lbnp thead th:first-child{text-align:left}
+.lbnp tbody th small{display:block;font-size:12px;color:var(--m);margin-top:2px;line-height:1.4}
+.lbnp td small{display:block;font-size:12px;color:var(--m);margin-top:2px;font-weight:400;line-height:1.4}
+.lbnp-plan{font-size:15px;font-weight:500;margin:0}
+.lbnp-desc{font-size:12px;color:var(--m);font-weight:400;line-height:1.45;margin:0 0 10px;height:4.35em;overflow:hidden;transition:opacity .12s}
+/* [fix] Description shows normally at rest. Once the header is actually
+   stuck to the top (see IntersectionObserver below, sets .is-stuck on
+   #Plans), it collapses away so the pinned bar stays compact while
+   scrolling. Height is collapsed too, not just opacity — otherwise the
+   reserved 4.35em box would leave a blank gap where the text used to be. */
+.lbnp.is-stuck .lbnp-desc{opacity:0;height:0;margin:0;overflow:hidden}
+.lbnp-price{font-size:22px;font-weight:500;line-height:1.1;margin:0}
+.lbnp-price > span{font-size:12px;font-weight:400;color:var(--m);display:block;margin-top:3px;line-height:1.45}
+.lbnp-price .lbnp-sub-full{display:block}
+.lbnp-price .lbnp-short{display:none}
+.lbnp-sec th{text-align:left;background:none;font-size:12px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--m);padding:26px 14px 8px}
+.lbnp-y{display:inline-block;width:13px;height:8px;border-left:2px solid #1d9e75;border-bottom:2px solid #1d9e75;transform:rotate(-45deg);margin-bottom:3px}
+.lbnp-n{color:#c4c4c4}
+.lbnp-foot{margin:22px 0 0;font-size:14px;color:var(--m);line-height:1.65}
+.lbnp-foot strong{color:var(--i);font-weight:500}
+.lbnp-foot a{color:var(--i)}
+
+/* [fix] Was max-width:768px. Widened to 1023px to cover the tablet band
+   that previously relied on horizontal scroll (see .lbnp-scroll above) —
+   that range now gets this compact layout instead, so sticky keeps working
+   at every width instead of only below 768px. */
+@media (max-width:1023px){
+  .lbnp-head h2{font-size:21px}
+  .lbnp-head p{font-size:14px}
+  .lbnp table{min-width:0;width:100%;font-size:11px}
+  .lbnp col.f{width:30%}
+  .lbnp col.p{width:17.5%}
+  .lbnp th,.lbnp td{padding:8px 4px;line-height:1.35}
+  .lbnp thead .lbnp-names th{padding:12px 4px 8px}
+  .lbnp thead .lbnp-meta td{padding:0 4px 12px}
+  .lbnp.is-stuck thead .lbnp-meta td{padding-top:6px}
+  .lbnp-sec th{padding:18px 6px 6px;font-size:10.5px;letter-spacing:.03em}
+  .lbnp tbody th{padding-left:6px}
+  .lbnp-desc{display:none}
+  .lbnp tbody th small{display:none}
+  .lbnp td small{font-size:10px}
+  .lbnp-plan{font-size:12px;margin:0;hyphens:auto}
+  .lbnp-price{font-size:14px}
+  .lbnp-price > span{font-size:10px;margin-top:2px}
+  .lbnp-price .lbnp-sub-full{display:none}
+  .lbnp-price .lbnp-short{display:block;font-size:10px;margin-top:2px}
+  .lbnp-desc{height:auto}
+  .lbnp-y{width:11px;height:7px}
+}
+
+.lbn-specs-wrap{--lbn-ink:#111;--lbn-mut:#6b6b6b;--lbn-line:#e3e3e3;font-family:inherit;color:var(--lbn-ink);max-width:1080px;margin:0 auto;box-sizing:border-box}
+.lbn-specs-wrap *,.lbn-specs-wrap *::before,.lbn-specs-wrap *::after{box-sizing:border-box}
+.lbn-specs{margin:20px 0 0;padding-top:28px}
+.lbn-specs h2{font-size:20px;font-weight:500;margin:0 0 20px}
+.lbn-spectable{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0 40px}
+.lbn-specgroup{break-inside:avoid;margin-bottom:22px}
+.lbn-specgroup h4{font-size:13px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--lbn-mut);margin:0 0 8px}
+.lbn-specrow{display:flex;justify-content:space-between;gap:20px;padding:7px 0;border-bottom:1px solid #f0f0ef;font-size:14px;line-height:1.5}
+.lbn-specrow span:first-child{color:var(--lbn-mut);flex:0 0 auto}
+.lbn-specrow span:last-child{text-align:right}
+@media (max-width:749px){.lbn-spectable{grid-template-columns:1fr}}
+.lbnp{margin-top:48px}
+.lbn-specs-wrap{margin-top:12px}
+@media (max-width:1023px){.lbnp{margin-top:34px}}
+</style>
+
+<div class="lbn-rentbuy">
+
+  <div class="lbn-grid">
+
+    <div class="lbn-gallery">
+
+      <div class="lbn-media" id="lbn-media" role="button" tabindex="0" aria-label="Enlarge product image"
+           data-zoom="https://lubn.com/cdn/shop/files/ai-lockbox-3-1945627.png?v=1773326408&width=1600"
+           data-zoom-title="AI Lockbox 3">
+        <img id="lbn-hero" src="https://lubn.com/cdn/shop/files/ai-lockbox-3-1945627.png?v=1773326408&width=1200" alt="Lubn AI Lockbox 3 with key storage" loading="lazy" width="1155" height="1114">
+      </div>
+
+      <!-- Swap these three if you'd rather show different shots. -->
+      <div class="lbn-thumbs">
+        <button class="lbn-thumb" type="button" aria-label="Enlarge product image 2"
+                data-zoom="https://lubn.com/cdn/shop/files/ai-lockbox-3-8807922.png?v=1773326408&width=1600"
+                data-zoom-title="AI Lockbox 3">
+          <img src="https://lubn.com/cdn/shop/files/ai-lockbox-3-8807922.png?v=1773326408&width=400" alt="" loading="lazy">
+        </button>
+        <button class="lbn-thumb" type="button" aria-label="Enlarge product image 3"
+                data-zoom="https://lubn.com/cdn/shop/files/ai-lockbox-3-1526368.png?v=1773326408&width=1600"
+                data-zoom-title="AI Lockbox 3">
+          <img src="https://lubn.com/cdn/shop/files/ai-lockbox-3-1526368.png?v=1773326408&width=400" alt="" loading="lazy">
+        </button>
+        <button class="lbn-thumb is-video" type="button" aria-label="Play the unboxing video"
+                data-video="https://cdn.shopify.com/videos/c/vp/39143d52b58d41bfb868d7fa2eddf170/39143d52b58d41bfb868d7fa2eddf170.HD-720p-4.5Mbps-90461726.mp4"
+                data-poster="https://cdn.shopify.com/s/files/1/0258/1685/8698/files/preview_images/OOBE_thumbnail.png?v=1785521979"
+                data-zoom-title="Open box experience">
+          <img src="https://cdn.shopify.com/s/files/1/0258/1685/8698/files/preview_images/OOBE_thumbnail.png?v=1785521979&width=500" alt="Unboxing the AI Lockbox 3" loading="lazy">
+          <span class="lbn-play" aria-hidden="true"><span></span></span>
+        </button>
+      </div>
+
+    </div>
+
+    <div>
+
+      <div class="lbn-tabs" role="tablist" aria-label="Buy or rent the AI Lockbox">
+        <button class="lbn-tab" type="button" role="tab" id="lbn-tab-buy" aria-controls="lbn-panel-buy" aria-selected="true">Buy</button>
+        <button class="lbn-tab" type="button" role="tab" id="lbn-tab-rent" aria-controls="lbn-panel-rent" aria-selected="false">Rent</button>
+      </div>
+
+
+      <!-- ============ BUY ============ -->
+      <div class="lbn-panel" id="lbn-panel-buy" role="tabpanel" aria-labelledby="lbn-tab-buy">
+        <h1 class="lbn-eyebrow">AI Lockbox 3 Pricing</h1>
+        <p class="lbn-price"><span class="lbn-price-lg" id="lbn-buyprice">$269</span><span class="lbn-price-sm" id="lbn-buycents">.95</span></p>
+        <p class="lbn-daily">Averages <b id="lbn-daily">$0.25</b> a day over 3 years</p>
+        <ul class="lbn-list">
+          <li id="lbn-inc-unit">AI Lockbox 3, 1 Key Storage, 1 shackle</li>
+          <li>PMS Data &amp; Showing Suite 1 month free</li>
+          <li>Free shipping</li>
+        </ul>
+
+        <div class="lbn-opts" role="radiogroup" aria-label="Choose a model">
+          <label class="lbn-opt is-on" data-price="269.95"
+                 data-img="https://cdn.shopify.com/s/files/1/0258/1685/8698/files/ai-lockbox-3-1945627.png?v=1773326408&width=1200"
+                 data-alt="Lubn AI Lockbox 3 with key storage">
+            <input type="radio" name="lbn-model" value="43280098459691" checked>
+            <span class="lbn-dot" aria-hidden="true"></span>
+            <span class="lbn-opt-name">Non-GPS<small>LTE/5G remote access</small></span>
+            <span class="lbn-opt-price">$269.95</span>
+          </label>
+          <label class="lbn-opt" data-price="299.95"
+                 data-img="https://lubn.com/cdn/shop/files/ai-lockbox-3-2379462.png?v=1785755407&width=1200"
+                 data-alt="Lubn AI Lockbox 3 with GPS">
+            <input type="radio" name="lbn-model" value="43280098426923">
+            <span class="lbn-dot" aria-hidden="true"></span>
+            <span class="lbn-opt-name">GPS<small>Adds precise device location tracking</small></span>
+            <span class="lbn-opt-price">$299.95</span>
+          </label>
+        </div>
+
+        <div class="lbn-qtyrow">
+          <span class="lbn-qtylabel">Quantity</span>
+          <span class="lbn-stepper">
+            <button class="lbn-step" type="button" data-step="-1" data-target="lbn-qty-unit" aria-label="Decrease quantity">&minus;</button>
+            <input class="lbn-qty" id="lbn-qty-unit" type="number" value="1" min="1" max="99" inputmode="numeric" aria-label="Lockbox quantity">
+            <button class="lbn-step" type="button" data-step="1" data-target="lbn-qty-unit" aria-label="Increase quantity">+</button>
+          </span>
+        </div>
+
+        <div class="lbn-acc">
+          <p class="lbn-acc-h">Add accessories</p>
+
+          <div class="lbn-accrow">
+            <img src="https://lubn.com/cdn/shop/files/key-storage-4025154.png?v=1773409447&width=140" alt="Key Storage for AI Lockbox 3 — click to enlarge" loading="lazy" tabindex="0" role="button"
+                 data-zoom="https://lubn.com/cdn/shop/files/key-storage-4025154.png?v=1773409447&width=1000"
+                 data-zoom-title="Key Storage" data-zoom-sub="$20.00 · spare key cartridge">
+            <span class="lbn-accname" role="button" tabindex="0"
+                  data-zoom="https://lubn.com/cdn/shop/files/key-storage-4025154.png?v=1773409447&width=1000"
+                  data-zoom-title="Key Storage" data-zoom-sub="$20.00 &middot; spare key cartridge">Key Storage<small>$20.00 &middot; spare key cartridge</small></span>
+            <span class="lbn-mini">
+              <button class="lbn-step" type="button" data-step="-1" data-target="lbn-qty-key" aria-label="Decrease Key Storage quantity">&minus;</button>
+              <input class="lbn-qty" id="lbn-qty-key" type="number" value="0" min="0" max="99" inputmode="numeric" aria-label="Key Storage quantity">
+              <button class="lbn-step" type="button" data-step="1" data-target="lbn-qty-key" aria-label="Increase Key Storage quantity">+</button>
+            </span>
+          </div>
+
+          <div class="lbn-accrow">
+            <img src="https://lubn.com/cdn/shop/files/wall-mount-kit-9327474.png?v=1773823567&width=140" alt="Wall-mount bracket — click to enlarge" loading="lazy" tabindex="0" role="button"
+                 data-zoom="https://lubn.com/cdn/shop/files/wall-mount-kit-9327474.png?v=1773823567&width=1000"
+                 data-zoom-title="Wall-mount bracket" data-zoom-sub="$20.00 · permanent secure mounting">
+            <span class="lbn-accname" role="button" tabindex="0"
+                  data-zoom="https://lubn.com/cdn/shop/files/wall-mount-kit-9327474.png?v=1773823567&width=1000"
+                  data-zoom-title="Wall-mount bracket" data-zoom-sub="$20.00 &middot; permanent secure mounting">Wall-mount bracket<small>$20.00 &middot; permanent secure mounting</small></span>
+            <span class="lbn-mini">
+              <button class="lbn-step" type="button" data-step="-1" data-target="lbn-qty-wall" aria-label="Decrease wall-mount quantity">&minus;</button>
+              <input class="lbn-qty" id="lbn-qty-wall" type="number" value="0" min="0" max="99" inputmode="numeric" aria-label="Wall-mount bracket quantity">
+              <button class="lbn-step" type="button" data-step="1" data-target="lbn-qty-wall" aria-label="Increase wall-mount quantity">+</button>
+            </span>
+          </div>
+        </div>
+
+        <div class="lbn-total"><span>Total</span><b id="lbn-total">$269.95</b></div>
+        <button class="lbn-cta" type="button" id="lbn-addcart">Add to cart</button>
+        <p class="lbn-err" id="lbn-err" hidden></p>
+
+        <p class="lbn-fine">
+          Built-in LTE/5G coverage is subject to local network strength (e.g. AT&amp;T or T-Mobile); see
+          <a href="/pages/terms-and-conditions">Terms</a>.
+          <span id="lbn-pmsnote">PMS Data &amp; Showing Suite billed separately.</span>
+          <strong>Real estate agents: confirm with your association before you buy.</strong>
+        </p>
+      </div>
+
+      <!-- ============ RENT ============ -->
+      <div class="lbn-panel" id="lbn-panel-rent" role="tabpanel" aria-labelledby="lbn-tab-rent" hidden>
+        <p class="lbn-eyebrow">AI Lockbox 3 &mdash; Rental</p>
+        <p class="lbn-price"><span class="lbn-price-lg">$1</span><span class="lbn-price-sm">.95</span><span class="lbn-price-unit">/day</span></p>
+        <p class="lbn-sub">Billed monthly at $58.50 &middot; 30-day minimum &middot; cancel anytime</p>
+
+        <ul class="lbn-list">
+          <li>AI Lockbox 3 with GPS, 1 Key Storage, 1 shackle</li>
+          <li>PMS Data &amp; Showing Suite included</li>
+          <li>Free shipping, both ways</li>
+        </ul>
+
+        <div class="lbn-callout">
+          <p><b>+ $150</b> refundable deposit &mdash; returned after we inspect the unit</p>
+        </div>
+
+        <div class="lbn-qtyrow">
+          <span class="lbn-qtylabel">Quantity</span>
+          <span class="lbn-stepper">
+            <button class="lbn-step" type="button" data-step="-1" data-target="lbn-qty-rent" aria-label="Decrease rental quantity">&minus;</button>
+            <input class="lbn-qty" id="lbn-qty-rent" type="number" value="1" min="1" max="99" inputmode="numeric" aria-label="Rental quantity">
+            <button class="lbn-step" type="button" data-step="1" data-target="lbn-qty-rent" aria-label="Increase rental quantity">+</button>
+          </span>
+        </div>
+
+        <div class="lbn-total">
+          <span>Due today<small style="display:block;font-size:12.5px;color:var(--lbn-mut);margin-top:2px" id="lbn-rentthen">then $58.50 a month</small></span>
+          <b id="lbn-renttotal">$208.50</b>
+        </div>
+
+        <button class="lbn-cta" type="button" id="lbn-rentcart">Start renting</button>
+        <p class="lbn-err" id="lbn-renterr" hidden></p>
+
+        <p class="lbn-fine">
+          Rental units are fully tested and refurbished, and may have been rented before.
+          Deposits are returned to your card within 120 days of your order, or as Lubn store credit after that.
+          Renting for more than about five months? Buying works out cheaper.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ ACCESSORY LIGHTBOX ============ -->
+  <div class="lbn-lb" id="lbn-lightbox" role="dialog" aria-modal="true" aria-labelledby="lbn-lb-title" hidden>
+    <button class="lbn-lb-x" type="button" id="lbn-lb-close" aria-label="Close">&times;</button>
+    <button class="lbn-lb-nav lbn-lb-prev" type="button" id="lbn-lb-prev" aria-label="Previous photo"></button>
+    <button class="lbn-lb-nav lbn-lb-next" type="button" id="lbn-lb-next" aria-label="Next photo"></button>
+    <div class="lbn-lb-inner" id="lbn-lb-inner">
+      <img id="lbn-lb-img" src="" alt="">
+      <video class="lbn-lb-video" id="lbn-lb-video" controls playsinline preload="none"></video>
+      <p class="lbn-lb-cap" id="lbn-lb-title">&nbsp;<small id="lbn-lb-sub">&nbsp;</small></p>
+    </div>
+  </div>
+
+</div>
+
+<div class="lbnp" id="Plans">
+
+  <div class="lbnp-head">
+    <h2>PMS Data &amp; Showing Suite</h2>
+    <p>Subscriptions for the PMS Data and Showing Suite, billed separately from lockbox pricing. Included for the whole term when you rent, on whichever plan you choose.</p>
+  </div>
+
+  <div class="lbnp-scroll">
+    <table>
+      <colgroup>
+        <col class="f"><col class="p"><col class="p"><col class="p"><col class="p">
+      </colgroup>
+      <thead>
+        <!-- Row 1: plan names only — this is the row that stays pinned. -->
+        <tr class="lbnp-names">
+          <th scope="col"><span class="lbnp-sr">Feature</span></th>
+          <th scope="col"><p class="lbnp-plan">Basic</p></th>
+          <th scope="col"><p class="lbnp-plan">Premium</p></th>
+          <th scope="col"><p class="lbnp-plan">Enterprise</p></th>
+          <th scope="col"><p class="lbnp-plan">Association</p></th>
+        </tr>
+        <!-- Row 2: descriptions and prices — now sticky too, see [fix] above. -->
+        <tr class="lbnp-meta">
+          <td></td>
+          <td>
+            <p class="lbnp-desc">For low seasons. Super Admin keeps unlimited access.</p>
+            <p class="lbnp-price">Free</p>
+          </td>
+          <td>
+            <p class="lbnp-desc">Empower your team to manage properties anywhere, anytime.</p>
+            <p class="lbnp-price" id="lbnp-price-premium">$9.99<span><span class="lbnp-sub-full">/mo/unit billed yearly, or $12.95 billed monthly</span><span class="lbnp-short">/mo/unit yearly</span></span></p>
+          </td>
+          <td>
+            <p class="lbnp-desc">Branded full-package services for your business.</p>
+            <p class="lbnp-price" id="lbnp-price-enterprise">$7.95<span><span class="lbnp-sub-full">/mo/unit, plus $799.95/yr membership</span><span class="lbnp-short">/mo/unit</span></span></p>
+          </td>
+          <td>
+            <p class="lbnp-desc">Management and showing suite for your realtor members.</p>
+            <p class="lbnp-price">Custom<span><span class="lbnp-sub-full">custom membership terms</span></span></p>
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="lbnp-sec"><th colspan="5" scope="colgroup">Essentials</th></tr>
+        <tr><th scope="row">PMS</th><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Master QR code</th><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Showing mode</th><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr class="lbnp-sec"><th colspan="5" scope="colgroup">Permission control</th></tr>
+        <tr><th scope="row">Super Admin</th><td>1</td><td>1</td><td>1</td><td>Unlimited</td></tr>
+        <tr><th scope="row">Admin</th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td>1 free<small>then $12.95/mo/seat</small></td><td>Unlimited</td></tr>
+        <tr><th scope="row">Manager</th><td>5 free</td><td>5 free</td><td>Unlimited</td><td>Unlimited</td></tr>
+        <tr><th scope="row">Visitor access<small>Single-day, multi-day, weekly, day pass</small></th><td>$2.95<small>/itinerary</small></td><td>Unlimited</td><td>Unlimited</td><td>Unlimited</td></tr>
+        <tr><th scope="row">Guest itinerary<small>Without access to keys</small></th><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr class="lbnp-sec"><th colspan="5" scope="colgroup">Remote management</th></tr>
+        <tr><th scope="row">Data network</th><td>Limited</td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Remote key release</th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">GPS location data</th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td>Optional</td><td>Optional</td><td>Optional</td></tr>
+        <tr><th scope="row">Access log</th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Realtime notifications</th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Check-in photo</th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Tamper alert</th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr class="lbnp-sec"><th colspan="5" scope="colgroup">Scheduling</th></tr>
+        <tr><th scope="row">Self-schedule</th><td>$2.95<small>/itinerary</small></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Integrated schedule</th><td>$2.95<small>/itinerary</small></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr class="lbnp-sec"><th colspan="5" scope="colgroup">Intelligence</th></tr>
+        <tr><th scope="row">Generative prop-script</th><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Virtual Agent</th><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">ID verification AI</th><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr class="lbnp-sec"><th colspan="5" scope="colgroup">Finance</th></tr>
+        <tr><th scope="row">Ledger</th><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Payout<small>To collect payments from visitors in Self-schedule</small></th><td>2.9% + 30&cent;<small>visitor 3%</small></td><td>2.9% + 30&cent;<small>visitor 3%</small></td><td>2.9% + 30&cent;<small>visitor 3%</small></td><td>Custom</td></tr>
+        <tr class="lbnp-sec"><th colspan="5" scope="colgroup">Branding</th></tr>
+        <tr><th scope="row">Custom booking URL</th><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Custom booking page</th><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Branded itinerary</th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr class="lbnp-sec"><th colspan="5" scope="colgroup">Productivity</th></tr>
+        <tr><th scope="row">Integrations</th><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Files</th><td>10<small>/property</small></td><td>10<small>/property</small></td><td>50<small>/property</small></td><td>Custom</td></tr>
+        <tr><th scope="row">eSigner</th><td>3 free/mo<small>then $4.95 each</small></td><td>3 free/mo<small>then $4.95 each</small></td><td>Unlimited</td><td>Custom</td></tr>
+        <tr><th scope="row"><a href="https://lubn.com/cdn/shop/files/Lubn-API-1.0.pdf" target="_blank" rel="noopener">Lubn API</a></th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr class="lbnp-sec"><th colspan="5" scope="colgroup">Association management</th></tr>
+        <tr><th scope="row">MLS integration</th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Remote lockbox config<small>Pre-configuration not required</small></th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Non-compliant access alert</th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Analytics</th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Home showing scheduling<small>Member-only</small></th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Feature control</th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Agent payout</th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td>Custom</td></tr>
+        <tr class="lbnp-sec"><th colspan="5" scope="colgroup">Customer assurance</th></tr>
+        <tr><th scope="row">OTA updates</th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td><td><span class="lbnp-y" aria-label="Included"></span></td></tr>
+        <tr><th scope="row">Onboarding</th><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td><td>Included</td><td>Included</td></tr>
+        <tr><th scope="row">Customer support</th><td>Email, chat</td><td>Email, chat</td><td>Email, chat, call</td><td>Email, chat, call</td></tr>
+        <tr><th scope="row">Warranty</th><td>1 year</td><td>Up to 3 years<small>with active subscription</small></td><td>Up to 3 years<small>with active subscription</small></td><td>Custom</td></tr>
+        <tr class="lbnp-sec"><th colspan="5" scope="colgroup">Lockbox discount</th></tr>
+        <tr>
+          <th scope="row">Volume pricing</th>
+          <td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td>
+          <td><span class="lbnp-n" aria-label="Not included">&mdash;</span></td>
+          <td><a href="mailto:service@lubn.com">Contact</a></td>
+          <td><a href="mailto:service@lubn.com">Contact</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="lbnp-foot">
+    <strong>Built for scale. Priced for volume.</strong>
+    Manage access across an entire commercial portfolio, with secure access for contractors and no logistical overhead.
+    For bulk orders and wholesale pricing, contact <a href="mailto:service@lubn.com">service@lubn.com</a>.
+  </p>
+
+</div>
+
+<div class="lbn-specs-wrap">
+    <!-- ============ HARDWARE SPECIFICATIONS ============ -->
+    <div class="lbn-specs">
+      <h2>Hardware specifications</h2>
+      <div class="lbn-spectable">
+
+        <div class="lbn-specgroup">
+          <h4>Appearance</h4>
+          <div class="lbn-specrow"><span>Lockbox size</span><span>9.5 &times; 3.2 &times; 2.9 in</span></div>
+          <div class="lbn-specrow"><span>Weight</span><span>2.2 lb</span></div>
+          <div class="lbn-specrow"><span>Key storage size</span><span>3.6 &times; 2.0 &times; 0.8 in</span></div>
+          <div class="lbn-specrow"><span>Shackle inner size</span><span>1.2 &times; 1.9 in</span></div>
+          <div class="lbn-specrow"><span>Body material</span><span>Aluminum alloy, steel</span></div>
+          <div class="lbn-specrow"><span>Color</span><span>Charcoal black</span></div>
+          <div class="lbn-specrow"><span>Finish</span><span>Coated silicone rubber</span></div>
+        </div>
+
+        <div class="lbn-specgroup">
+          <h4>Power and battery</h4>
+          <div class="lbn-specrow"><span>Battery type</span><span>Rechargeable Li-battery</span></div>
+          <div class="lbn-specrow"><span>Capacity</span><span>10,100 mAh</span></div>
+          <div class="lbn-specrow"><span>Charging speed</span><span>4 hr, 10&ndash;90%</span></div>
+          <div class="lbn-specrow"><span>Charging interface</span><span>Type-C</span></div>
+          <div class="lbn-specrow"><span>Battery life</span><span>8-month standby, or 150 showings</span></div>
+          <div class="lbn-specrow"><span>Emergency power</span><span>Power bank (not included)</span></div>
+        </div>
+
+        <div class="lbn-specgroup">
+          <h4>Connectivity and access</h4>
+          <div class="lbn-specrow"><span>Network</span><span>LTE (AT&amp;T, T-Mobile, etc.)</span></div>
+          <div class="lbn-specrow"><span>SIM</span><span>Embedded e-SIM</span></div>
+          <div class="lbn-specrow"><span>GPS tracking</span><span>Optional</span></div>
+          <div class="lbn-specrow"><span>Access control</span><span>Dynamic QR or remote app</span></div>
+          <div class="lbn-specrow"><span>Compatibility</span><span>Web, iOS, Android</span></div>
+        </div>
+
+        <div class="lbn-specgroup">
+          <h4>Camera and environment</h4>
+          <div class="lbn-specrow"><span>Camera</span><span>5 MP HDR, 120&deg; FoV with SoC</span></div>
+          <div class="lbn-specrow"><span>Weatherproof</span><span>IP 5/5</span></div>
+          <div class="lbn-specrow"><span>Operating temp.</span><span>&minus;4&deg;F to 140&deg;F</span></div>
+        </div>
+
+        <div class="lbn-specgroup">
+          <h4>Security</h4>
+          <div class="lbn-specrow"><span>Encryption</span><span>HTTPS</span></div>
+          <div class="lbn-specrow"><span>Data center</span><span>USA, no user data stored on edge</span></div>
+          <div class="lbn-specrow"><span><a href="https://lubn.com/pages/limited-warranty">Warranty</a></span><span id="lbn-warranty">1 yr, up to 3 yr with subscription</span></div>
+        </div>
+
+        <div class="lbn-specgroup">
+          <h4>Also included</h4>
+          <div class="lbn-specrow"><span>Check-in photo</span><span>With face detection</span></div>
+          <div class="lbn-specrow"><span>Offline access</span><span>Yes</span></div>
+          <div class="lbn-specrow"><span>Voice guide</span><span>Robotic voice guide</span></div>
+        </div>
+
+      </div>
+    </div>
+</div>
+
+<script>
+(function(){
+  var all = document.querySelectorAll('.lbn-rentbuy');
+  var root = all[all.length-1];
+  if(!root) return;
+
+  /* ---- PRODUCT GATE ----------------------------------------------------
+     The `products` template is shared by EVERY product, so without this the
+     block would also appear on Key Storage and the Wall-mount kit. The inline
+     script at the top of this file hides it before paint; this removes it from
+     the DOM so its scripts and fetches never run.
+
+     Handled in JS rather than Liquid because PageFly's HTML/Liquid element
+     does not execute Liquid here — the tags printed to the page as text.
+
+     Add a handle to BOTH lists to show the block on another product.       */
+  var SHOW_ON = ['ai-lockbox-3', 'ai-lockbox-3-gps-monthly-rental'];
+  var onProduct = location.pathname.match(/\/products\/([^\/?#]+)/);
+  if(onProduct && SHOW_ON.indexOf(onProduct[1]) === -1){
+    root.parentNode && root.parentNode.removeChild(root);
+    return;
+  }
+
+  var ACC = { 'lbn-qty-key': 29105746083914, 'lbn-qty-wall': 43285090304043 };
+  var ACC_PRICE = 20.00;
+
+
+  /* ---- RENTAL ----------------------------------------------------------
+     Variant IDs for the three rental products, plus the Shopify
+     Subscriptions selling plan. If SELLING_PLAN_ID is ever set back to
+     null the button falls back to linking to the rental product page.     */
+  var RENT = {
+    unit:    44538186498091,   // AI Lockbox 3 (GPS) — Monthly Rental  $58.50
+    deposit: 44538201079851,   // Rental Security Deposit              $150.00
+    url:     '/products/ai-lockbox-3-gps-monthly-rental'
+  };
+  var SELLING_PLAN_ID = 9805332523;  // Shopify Subscriptions — "Monthly rental" plan
+  var RENT_MONTHLY = 58.50, RENT_DEPOSIT = 150.00;
+
+  /* ---- ANALYTICS -------------------------------------------------------
+     Does NOT load GTM, GA4 or any pixel — those are already site-wide
+     (GTM-5VBL9XL2). Loading them again would double-count pageviews.
+     This only emits events for interactions inside this block, which the
+     theme's own tracking can't see because we bypass the theme's product
+     form and POST straight to /cart/add.js.
+
+     Shopify's own `product_added_to_cart` web-pixel event DOES fire on
+     /cart/add.js automatically, so Shopify Analytics and any Customer
+     Events pixel (Meta, TikTok, GA4 channel) already catch the purchase
+     intent. What follows fills the GTM/GA4 gap and adds Buy-vs-Rent
+     engagement, which has no Shopify standard event.
+
+     In GTM, create Custom Event triggers on:
+       view_item · select_item · add_to_cart · lubn_plan_toggle
+     ---------------------------------------------------------------- */
+  var CURRENCY = 'USD';
+
+  function track(name, params){
+    params = params || {};
+    try {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push(Object.assign({ event: name, currency: CURRENCY }, params));
+    } catch(e){}
+    try { if(typeof window.gtag === 'function') window.gtag('event', name, Object.assign({ currency: CURRENCY }, params)); } catch(e){}
+    try {
+      if(typeof window.fbq === 'function'){
+        var fb = { content_type: 'product', value: params.value || 0, currency: CURRENCY,
+                   content_ids: (params.items || []).map(function(i){ return String(i.item_id); }) };
+        if(name === 'add_to_cart') window.fbq('track', 'AddToCart', fb);
+        else if(name === 'view_item') window.fbq('track', 'ViewContent', fb);
+      }
+    } catch(e){}
+    try {
+      if(typeof window.ttq === 'object' && window.ttq.track){
+        if(name === 'add_to_cart') window.ttq.track('AddToCart', { value: params.value || 0, currency: CURRENCY });
+      }
+    } catch(e){}
+  }
+
+  /* Shown on the Rent tab. The rental ships as a suite — lockbox, key
+     storage and shackle — so it gets its own shot rather than the GPS
+     variant image used on the Buy tab. */
+  var RENT_IMG = 'https://cdn.shopify.com/s/files/1/0258/1685/8698/files/ai-lockbox-3-5145878.png?v=1785755407&width=1200';
+
+  /* Images pinned by hand. The Shopify fetch further down deliberately skips
+     these, so they stay exactly as chosen even if the variant or product is
+     assigned a different image in Shopify. Remove an entry to hand that image
+     back to Shopify's control. */
+  var PINNED = {
+    43280098459691: 'https://cdn.shopify.com/s/files/1/0258/1685/8698/files/ai-lockbox-3-1945627.png?v=1773326408&width=1200',   // Non-GPS hero
+    rent:           'https://cdn.shopify.com/s/files/1/0258/1685/8698/files/ai-lockbox-3-5145878.png?v=1785755407&width=1200'    // Rent hero
+  };
+
+  var tabs   = root.querySelectorAll('.lbn-tab');
+  var opts   = root.querySelectorAll('.lbn-opt');
+  var totalEl= root.querySelector('#lbn-total');
+  var bigEl  = root.querySelector('#lbn-buyprice');
+  var cenEl  = root.querySelector('#lbn-buycents');
+  var errEl  = root.querySelector('#lbn-err');
+  var btn    = root.querySelector('#lbn-addcart');
+  var hero   = root.querySelector('#lbn-hero');
+  var dailyEl= root.querySelector('#lbn-daily');
+  var incEl  = root.querySelector('#lbn-inc-unit');
+  var warEl  = document.querySelector('#lbn-warranty');  /* lives in Part 2 */
+  var rentTotalEl = root.querySelector('#lbn-renttotal');
+  var rentThenEl  = root.querySelector('#lbn-rentthen');
+  var rentErrEl   = root.querySelector('#lbn-renterr');
+  var rentBtn     = root.querySelector('#lbn-rentcart');
+  var booted = false;
+
+  /* Premium's price swaps to "Included" on the Rent tab. Capture the original
+     markup now, before anything changes it, so Buy can restore it exactly. */
+  var premPriceEl   = document.getElementById('lbnp-price-premium');
+  var premPriceHTML = premPriceEl ? premPriceEl.innerHTML : '';
+  var entPriceEl    = document.getElementById('lbnp-price-enterprise');
+  var entPriceHTML  = entPriceEl ? entPriceEl.innerHTML : '';
+
+  var mediaBox = root.querySelector('#lbn-media');
+
+  function setHero(src, alt){
+    if(!hero || hero.getAttribute('src') === src) return;
+    hero.setAttribute('src', src);
+    if(alt) hero.setAttribute('alt', alt);
+    /* keep the lightbox pointing at whichever variant is showing */
+    if(mediaBox){
+      mediaBox.setAttribute('data-zoom', src.replace(/width=\d+/, 'width=1600'));
+      if(alt) mediaBox.setAttribute('data-zoom-title', alt);
+    }
+  }
+
+  function selectTab(id){
+    for(var i=0;i<tabs.length;i++){
+      var t=tabs[i], on = t.id===id;
+      t.setAttribute('aria-selected', on?'true':'false');
+      var p = root.querySelector('#'+t.getAttribute('aria-controls'));
+      if(p) p.hidden = !on;
+    }
+    var renting = id === 'lbn-tab-rent';
+    if(warEl) warEl.textContent = renting ? 'Up to 1 yr' : '1 yr, up to 3 yr with subscription';
+    /* PMS is included with a rental, so this note only applies to Buy. It sits
+       inside the Buy panel and would hide anyway — set explicitly so it stays
+       correct if the note is ever moved outside the panel. */
+    var pmsNote = document.getElementById('lbn-pmsnote');
+    if(pmsNote) pmsNote.style.display = renting ? 'none' : '';
+    if(premPriceEl){
+      premPriceEl.innerHTML = renting
+        ? 'Included<span>with your rental</span>'
+        : premPriceHTML;
+    }
+    /* Enterprise waives the per-unit fee too, but NOT the annual company
+       membership — so the wording differs from Premium. */
+    if(entPriceEl){
+      entPriceEl.innerHTML = renting
+        ? 'Included<span>membership billed separately</span>'
+        : entPriceHTML;
+    }
+    if(renting){
+      setHero(RENT_IMG, 'Lubn AI Lockbox 3 rental suite — lockbox, key storage and shackle');
+    } else {
+      refresh();
+    }
+    if(booted){
+      track('lubn_plan_toggle', { plan: renting ? 'rent' : 'buy' });
+      track('view_item', renting
+        ? { value: rentValue(), items: rentItems() }
+        : { value: buyValue(),  items: buyItems()  });
+    }
+  }
+  for(var i=0;i<tabs.length;i++){(function(t){
+    t.addEventListener('click', function(){ selectTab(t.id); });
+    t.addEventListener('keydown', function(e){
+      if(e.key!=='ArrowRight' && e.key!=='ArrowLeft') return;
+      e.preventDefault();
+      var idx=Array.prototype.indexOf.call(tabs,t);
+      var nx=tabs[(idx+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];
+      nx.focus(); selectTab(nx.id);
+    });
+  })(tabs[i]);}
+
+  function val(id){ var el=root.querySelector('#'+id); return el ? (parseInt(el.value,10)||0) : 0; }
+
+  function currentOpt(){
+    for(var i=0;i<opts.length;i++){ if(opts[i].querySelector('input').checked) return opts[i]; }
+    return opts[0];
+  }
+  function optLabel(o){
+    var n = o.querySelector('.lbn-opt-name');
+    return n ? (n.childNodes[0].nodeValue || '').trim() : '';
+  }
+  function buyItems(){
+    var o = currentOpt(), q = Math.max(1, val('lbn-qty-unit'));
+    var list = [{ item_id: o.querySelector('input').value, item_name: 'AI Lockbox 3',
+                  item_variant: optLabel(o), item_category: 'Lockbox',
+                  price: parseFloat(o.getAttribute('data-price')), quantity: q }];
+    if(val('lbn-qty-key') > 0)  list.push({ item_id: String(ACC['lbn-qty-key']),  item_name: 'Key Storage',        item_category: 'Accessory', price: ACC_PRICE, quantity: val('lbn-qty-key') });
+    if(val('lbn-qty-wall') > 0) list.push({ item_id: String(ACC['lbn-qty-wall']), item_name: 'Wall-mount bracket', item_category: 'Accessory', price: ACC_PRICE, quantity: val('lbn-qty-wall') });
+    return list;
+  }
+  function buyValue(){
+    return buyItems().reduce(function(s,i){ return s + i.price * i.quantity; }, 0);
+  }
+  function rentItems(){
+    var q = Math.max(1, val('lbn-qty-rent'));
+    return [
+      { item_id: String(RENT.unit),    item_name: 'AI Lockbox 3 Rental',   item_variant: 'GPS monthly', item_category: 'Rental',   price: RENT_MONTHLY, quantity: q },
+      { item_id: String(RENT.deposit), item_name: 'Rental Deposit',        item_category: 'Rental',     price: RENT_DEPOSIT, quantity: q }
+    ];
+  }
+  function rentValue(){ return (RENT_MONTHLY + RENT_DEPOSIT) * Math.max(1, val('lbn-qty-rent')); }
+
+  function unitPrice(){
+    for(var i=0;i<opts.length;i++){
+      if(opts[i].querySelector('input').checked) return parseFloat(opts[i].getAttribute('data-price'));
+    }
+    return 0;
+  }
+
+  function money(n){ return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+  function refresh(){
+    var p = unitPrice();
+    var whole = Math.floor(p);
+    bigEl.textContent = '$' + whole;
+    cenEl.textContent = p.toFixed(2).slice(-3);
+
+    var total = p * Math.max(1, val('lbn-qty-unit'))
+              + ACC_PRICE * (val('lbn-qty-key') + val('lbn-qty-wall'));
+    totalEl.textContent = money(total);
+
+    /* Hardware cost per day if the unit is kept for three years (1,095 days).
+       Device only — the PMS subscription is priced separately and is called
+       out in the fine print below. Per unit: accessories and quantity don't
+       change the figure. */
+    if(dailyEl) dailyEl.textContent = '$' + (p / 1095).toFixed(2);
+
+    /* First inclusion line names the selected model, so it can't say
+       "with GPS" while Non-GPS is chosen. */
+    if(incEl){
+      incEl.textContent = (optLabel(currentOpt()) === 'GPS' ? 'AI Lockbox 3 with GPS' : 'AI Lockbox 3')
+                        + ', 1 Key Storage, 1 shackle';
+    }
+
+    for(var k=0;k<opts.length;k++){
+      var on = opts[k].querySelector('input').checked;
+      opts[k].classList.toggle('is-on', on);
+      if(on && !root.querySelector('#lbn-panel-buy').hidden){
+        setHero(opts[k].getAttribute('data-img'), opts[k].getAttribute('data-alt'));
+      }
+    }
+    var rq = Math.max(1, val('lbn-qty-rent'));
+    if(rentTotalEl) rentTotalEl.textContent = money((RENT_MONTHLY + RENT_DEPOSIT) * rq);
+    if(rentThenEl)  rentThenEl.textContent  = 'then ' + money(RENT_MONTHLY * rq) + ' a month';
+
+    root.querySelectorAll('.lbn-step').forEach(function(b){
+      var t = b.getAttribute('data-target');
+      var min = (t === 'lbn-qty-unit' || t === 'lbn-qty-rent') ? 1 : 0;
+      b.disabled = (b.getAttribute('data-step') === '-1' && val(t) <= min);
+    });
+  }
+
+  root.querySelectorAll('.lbn-step').forEach(function(b){
+    b.addEventListener('click', function(){
+      var t   = b.getAttribute('data-target');
+      var el  = root.querySelector('#'+t);
+      var min = (t === 'lbn-qty-unit' || t === 'lbn-qty-rent') ? 1 : 0;
+      el.value = Math.max(min, Math.min(99, (parseInt(el.value,10)||min) + parseInt(b.getAttribute('data-step'),10)));
+      refresh();
+    });
+  });
+  root.querySelectorAll('.lbn-qty').forEach(function(el){
+    el.addEventListener('input', refresh);
+    el.addEventListener('blur', function(){
+      var min = (el.id === 'lbn-qty-unit' || el.id === 'lbn-qty-rent') ? 1 : 0;
+      el.value = Math.max(min, Math.min(99, parseInt(el.value,10)||min));
+      refresh();
+    });
+  });
+  root.querySelectorAll('.lbn-opt input').forEach(function(r){
+    r.addEventListener('change', function(){
+      refresh();
+      var o = currentOpt();
+      track('select_item', {
+        item_list_name: 'Pricing page — Buy',
+        value: parseFloat(o.getAttribute('data-price')),
+        items: [{ item_id: o.querySelector('input').value, item_name: 'AI Lockbox 3',
+                  item_variant: optLabel(o), item_category: 'Lockbox',
+                  price: parseFloat(o.getAttribute('data-price')), quantity: 1 }]
+      });
+    });
+  });
+
+  btn.addEventListener('click', function(){
+    errEl.hidden = true;
+    var items = [];
+    for(var i=0;i<opts.length;i++){
+      var input = opts[i].querySelector('input');
+      if(input.checked){ items.push({ id: parseInt(input.value,10), quantity: Math.max(1, val('lbn-qty-unit')) }); }
+    }
+    for(var key in ACC){
+      if(val(key) > 0) items.push({ id: ACC[key], quantity: val(key) });
+    }
+    btn.disabled = true; btn.textContent = 'Adding…';
+    track('add_to_cart', { value: buyValue(), items: buyItems(), plan: 'buy' });
+
+    fetch('/cart/add.js', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ items: items })
+    })
+    .then(function(r){ if(!r.ok) return r.json().then(function(d){ throw new Error(d.description || d.message || 'Could not add to cart'); }); return r.json(); })
+    .then(function(){ window.location.href = '/cart'; })
+    .catch(function(e){
+      errEl.textContent = e.message || 'Something went wrong. Please try again.';
+      errEl.hidden = false;
+      btn.disabled = false; btn.textContent = 'Add to cart';
+    });
+  });
+
+  if(rentBtn) rentBtn.addEventListener('click', function(){
+    var q = Math.max(1, val('lbn-qty-rent'));
+
+    if(!SELLING_PLAN_ID){
+      track('select_item', { item_list_name: 'Pricing page — Rent', value: rentValue(), items: rentItems() });
+      window.location.href = RENT.url;
+      return;
+    }
+
+    rentErrEl.hidden = true;
+    rentBtn.disabled = true; rentBtn.textContent = 'Adding…';
+    track('add_to_cart', { value: rentValue(), items: rentItems(), plan: 'rent' });
+
+    /* The V2 theme renders the cart NEWEST-FIRST, so this array is deliberately
+       reversed. Added last = shown first. Displayed order ends up:
+         1. AI Lockbox 3 (GPS) — Monthly Rental
+         2. Rental Security Deposit (Refundable)                              */
+    var items = [
+      { id: RENT.deposit, quantity: q },
+      { id: RENT.unit,    quantity: q, selling_plan: SELLING_PLAN_ID }
+    ];
+
+    fetch('/cart/add.js', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ items: items })
+    })
+    .then(function(r){ if(!r.ok) return r.json().then(function(d){ throw new Error(d.description || d.message || 'Could not start the rental'); }); return r.json(); })
+    .then(function(){ window.location.href = '/cart'; })
+    .catch(function(e){
+      rentErrEl.textContent = e.message || 'Something went wrong. Please try again.';
+      rentErrEl.hidden = false;
+      rentBtn.disabled = false; rentBtn.textContent = 'Start renting';
+    });
+  });
+
+  /* ---- accessory lightbox ---- */
+  (function(){
+    var lb = root.querySelector('#lbn-lightbox');
+    if(!lb) return;
+    var lbInner = lb.querySelector('#lbn-lb-inner');
+    var lbImg = lb.querySelector('#lbn-lb-img');
+    var lbVid = lb.querySelector('#lbn-lb-video');
+    var lbTtl = lb.querySelector('#lbn-lb-title');
+    var lbSub = lb.querySelector('#lbn-lb-sub');
+    var lbX   = lb.querySelector('#lbn-lb-close');
+    var lbPrev = lb.querySelector('#lbn-lb-prev');
+    var lbNext = lb.querySelector('#lbn-lb-next');
+    var opener = null;
+    var currentIndex = -1;
+
+    /* [feature] Prev/Next gallery navigation, added on top of the original
+       single-image lightbox.
+
+       Rebuilt fresh on every navigation (not cached once at load) because
+       the hero image's data-zoom changes at runtime — switching GPS/Non-GPS
+       or Buy/Rent updates it via setHero() elsewhere in this file. Caching
+       the list once would let it go stale and skip past the current photo.
+
+       Navigates in DOM order across every zoomable element on the page:
+       hero photo, the three thumbnails (two stills + the unboxing video),
+       then the two accessory rows — one continuous gallery rather than
+       separate ones per section, since there are only a handful of items
+       total and keeping it as one sequence is simplest for both the code
+       and the person clicking through it. Wraps around at either end.
+
+       Deduplicated by content, not just by element: each accessory row has
+       TWO independently-clickable triggers for the same photo (the thumb
+       image and the name text next to it), so a naive element list would
+       stop and show "the same photo again" on the very next click — this
+       keys on data-zoom/data-video instead, keeping only first occurrence,
+       so those collapse into a single stop. */
+    function itemKey(el){ return el.getAttribute('data-video') || el.getAttribute('data-zoom') || ''; }
+
+    function getItems(){
+      var all = Array.prototype.slice.call(root.querySelectorAll('[data-zoom], [data-video]'));
+      var seen = {}, unique = [];
+      all.forEach(function(el){
+        var key = itemKey(el);
+        if(seen[key]) return;
+        seen[key] = true;
+        unique.push(el);
+      });
+      return unique;
+    }
+
+    function indexFor(el){
+      var key = itemKey(el);
+      var items = getItems();
+      for(var i=0;i<items.length;i++){ if(itemKey(items[i]) === key) return i; }
+      return -1;
+    }
+
+    function render(el){
+      var video = el.getAttribute('data-video');
+
+      if(video){
+        lbInner.classList.add('is-video');
+        if(lbVid.getAttribute('src') !== video){
+          lbVid.setAttribute('src', video);
+          var poster = el.getAttribute('data-poster');
+          if(poster) lbVid.setAttribute('poster', poster);
+        }
+        lbVid.currentTime = 0;
+        var p = lbVid.play();
+        if(p && p.catch) p.catch(function(){});   /* autoplay may be blocked — controls are there */
+      } else {
+        lbInner.classList.remove('is-video');
+        try { lbVid.pause(); } catch(e){}
+        var inner = el.tagName === 'IMG' ? el : el.querySelector('img');
+        lbImg.setAttribute('src', el.getAttribute('data-zoom') || (inner && inner.getAttribute('src')) || '');
+        lbImg.setAttribute('alt', el.getAttribute('data-zoom-title') || '');
+      }
+
+      lbTtl.childNodes[0].nodeValue = el.getAttribute('data-zoom-title') || '';
+      lbSub.textContent = el.getAttribute('data-zoom-sub') || '';
+    }
+
+    function goTo(index){
+      var items = getItems();
+      if(!items.length) return;
+      if(index < 0) index = items.length - 1;
+      if(index >= items.length) index = 0;
+      currentIndex = index;
+      render(items[currentIndex]);
+      /* Hide the arrows entirely rather than disabling them when there's
+         only one item (e.g. a page with a single accessory) — nothing to
+         navigate to, so there's nothing useful the buttons could do. */
+      var multi = items.length > 1;
+      lbPrev.hidden = !multi;
+      lbNext.hidden = !multi;
+    }
+
+    function open(el){
+      opener = el;
+      goTo(indexFor(el));
+      lb.hidden = false;
+      requestAnimationFrame(function(){ lb.classList.add('is-open'); });
+      lbX.focus();
+      document.addEventListener('keydown', onKey);
+    }
+    function close(){
+      lb.classList.remove('is-open');
+      document.removeEventListener('keydown', onKey);
+      try { lbVid.pause(); } catch(e){}
+      setTimeout(function(){ lb.hidden = true; }, 200);
+      if(opener) opener.focus();
+    }
+    function onKey(e){
+      if(e.key === 'Escape') close();
+      else if(e.key === 'ArrowLeft'){ e.preventDefault(); goTo(currentIndex - 1); }
+      else if(e.key === 'ArrowRight'){ e.preventDefault(); goTo(currentIndex + 1); }
+    }
+
+    /* Any element with data-zoom opens the lightbox: main image, the three
+       thumbnails, and the two accessory rows. */
+    root.querySelectorAll('[data-zoom], [data-video]').forEach(function(el){
+      el.addEventListener('click', function(){ open(el); });
+
+      /* <button> already fires click on Enter/Space — only patch the others. */
+      if(el.tagName !== 'BUTTON'){
+        el.addEventListener('keydown', function(e){
+          if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); open(el); }
+        });
+      }
+
+      /* Preload the full-size still on hover. Never preload video — that
+         would pull several MB from anyone who brushes past the thumbnail. */
+      var zoom = el.getAttribute('data-zoom');
+      if(zoom && !el.getAttribute('data-video')){
+        var pre = new Image();
+        el.addEventListener('mouseenter', function(){ if(!pre.src) pre.src = zoom; });
+      }
+    });
+
+    lbX.addEventListener('click', close);
+    lbPrev.addEventListener('click', function(e){ e.stopPropagation(); goTo(currentIndex - 1); });
+    lbNext.addEventListener('click', function(e){ e.stopPropagation(); goTo(currentIndex + 1); });
+    lb.addEventListener('click', function(e){ if(e.target === lb) close(); });
+
+    /* [feature] Swipe left/right on touch devices — same gesture as any
+       native mobile gallery, so nobody has to close and reopen just to see
+       the next photo. A tap that barely moves still reaches the close-on-
+       backdrop-click handler above since it won't cross MIN_SWIPE. */
+    var touchStartX = null, touchStartY = null;
+    var MIN_SWIPE = 40;
+    lbInner.addEventListener('touchstart', function(e){
+      if(e.touches.length !== 1) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    lbInner.addEventListener('touchend', function(e){
+      if(touchStartX === null) return;
+      var dx = e.changedTouches[0].clientX - touchStartX;
+      var dy = e.changedTouches[0].clientY - touchStartY;
+      touchStartX = null; touchStartY = null;
+      /* Require the swipe to be more horizontal than vertical, so a normal
+         vertical scroll attempt on a tall image doesn't get mistaken for a
+         page-change gesture. */
+      if(Math.abs(dx) < MIN_SWIPE || Math.abs(dx) < Math.abs(dy)) return;
+      if(dx < 0) goTo(currentIndex + 1); else goTo(currentIndex - 1);
+    }, { passive: true });
+  })();
+
+  /* ---- LIVE IMAGES FROM SHOPIFY ---------------------------------------
+     The hardcoded CDN URLs above are only a first paint. Shopify rewrites a
+     file's URL whenever an image is re-uploaded or edited, which silently
+     breaks a hardcoded link — it has happened three times. So on load we ask
+     Shopify what the current images actually are and swap them in.
+
+       Buy  → each variant's own image from /products/ai-lockbox-3.js
+       Rent → the rental product's featured image
+
+     Change an image in Shopify and the page follows, with no code edit.
+     If either request fails, the hardcoded URLs simply remain.            */
+  (function(){
+    function biggest(url){
+      return url ? url.replace(/(\.[a-z]{3,4})(\?|$)/i, '$1$2').replace(/([?&])width=\d+/, '$1width=1200') : url;
+    }
+
+    /* Buy tab — map variant id → current image */
+    fetch('/products/ai-lockbox-3.js', { headers: { 'Accept': 'application/json' } })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(p){
+        if(!p || !p.variants) return;
+        var byId = {};
+        p.variants.forEach(function(v){ if(v.featured_image && v.featured_image.src) byId[v.id] = v.featured_image.src; });
+        opts.forEach(function(o){
+          var id  = parseInt(o.querySelector('input').value, 10);
+          if(PINNED[id]) return;              /* hand-picked — leave it alone */
+          var src = byId[id];
+          if(!src) return;
+          o.setAttribute('data-img', biggest(src));
+        });
+        refresh();   /* repaint the hero with whichever option is selected */
+      })
+      .catch(function(){});
+
+    /* Rent tab — the rental product's featured image */
+    if(PINNED.rent) return;                 /* hand-picked — skip the lookup */
+    fetch('/products/ai-lockbox-3-gps-monthly-rental.js', { headers: { 'Accept': 'application/json' } })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(p){
+        if(!p || !p.featured_image) return;
+        RENT_IMG = biggest(p.featured_image);
+        if(root.querySelector('#lbn-panel-rent').hidden === false){
+          setHero(RENT_IMG, 'Lubn AI Lockbox 3 rental');
+        }
+      })
+      .catch(function(){});
+  })();
+
+  /* [fix] Keeps --lbnp-top (nav clearance), --lbnp-meta-top (price row's
+     offset beneath the name row) and .is-stuck (collapses the description)
+     all correct together, recomputed on every scroll frame — not just on
+     resize/load.
+
+     Why scroll, not just resize: your nav's rendered height can change
+     *while scrolling* (e.g. an announcement bar above it collapsing away,
+     or a "shrink on scroll" nav effect) without the window ever resizing.
+     Measuring --lbnp-top only once on load/resize meant it could go stale
+     mid-scroll — if it was captured while the nav was still tall, the
+     table kept reserving that larger gap even after the nav had already
+     shrunk, leaving a visible gap with a table row showing through it.
+     Recalculating on every scroll frame keeps it matched to the nav's
+     actual current height at all times. */
+  (function(){
+    var plansWrap = document.getElementById('Plans');
+    var namesRow  = plansWrap && plansWrap.querySelector('.lbnp-names');
+    if(!plansWrap || !namesRow) return;
+
+    function detectHeaderOffset(){
+      var max = 0;
+      var candidates = document.querySelectorAll('header, [class*="header" i], [id*="header" i]');
+      for(var i=0;i<candidates.length;i++){
+        var el = candidates[i];
+        var cs = getComputedStyle(el);
+        if((cs.position === 'sticky' || cs.position === 'fixed') && parseFloat(cs.top) <= 1){
+          var rect = el.getBoundingClientRect();
+          if(rect.top <= 1 && rect.height > 0 && rect.height < 300){
+            max = Math.max(max, rect.bottom);
+          }
+        }
+      }
+      return max;
+    }
+
+    var ticking = false;
+    function update(){
+      ticking = false;
+      var headerOffset = detectHeaderOffset();
+      plansWrap.style.setProperty('--lbnp-top', headerOffset + 'px');
+      var nameHeight = namesRow.getBoundingClientRect().height;
+      plansWrap.style.setProperty('--lbnp-meta-top', (headerOffset + nameHeight) + 'px');
+      var stuck = namesRow.getBoundingClientRect().top <= headerOffset + 0.5;
+      plansWrap.classList.toggle('is-stuck', stuck);
+    }
+    function onFrame(){
+      if(!ticking){ ticking = true; requestAnimationFrame(update); }
+    }
+    window.addEventListener('scroll', onFrame, { passive: true });
+    window.addEventListener('resize', onFrame);
+    if(document.fonts && document.fonts.ready){ document.fonts.ready.then(update); }
+    update();
+  })();
+
+  var startRent = (location.hash === '#rent' || /[?&]plan=rent/.test(location.search));
+  if(startRent) selectTab('lbn-tab-rent');
+  refresh();
+
+  booted = true;
+  track('view_item', startRent
+    ? { value: rentValue(), items: rentItems() }
+    : { value: buyValue(),  items: buyItems()  });
+})();
+</script>
