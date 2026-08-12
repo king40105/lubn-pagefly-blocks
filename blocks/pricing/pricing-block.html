@@ -33,12 +33,12 @@
           prices scrolled away. Offset is computed in JS from the actual
           rendered height of the name row, so it keeps working if the
           plan names ever wrap to two lines or the font size changes.
-    [fix] Removed the 769–1023px horizontal-scroll band on the table.
+    [fix] Removed the 769–1024px horizontal-scroll band on the table.
           overflow-x:auto on an ancestor makes it a scroll container,
           which silently breaks position:sticky for everything inside —
           that's why sticky wasn't working at tablet widths. The mobile
           compact-table styling (768px breakpoint) is now applied up to
-          1023px instead, so tablet widths get the compact layout rather
+          1024px instead, so tablet widths get the compact layout rather
           than a scrolling table, and sticky works at every width.
     [fix] Per-plan description under each plan name now collapses once the
           header is actually stuck to the top, so the pinned bar stays
@@ -77,7 +77,7 @@
 <style>
 .lbn-no-block .lbn-rentbuy,
 .lbn-no-block .lbnp,
-.lbn-rentbuy{--lbn-ink:#111;--lbn-mut:#6b6b6b;--lbn-line:#e3e3e3;--lbn-soft:#f6f6f4;--lbn-blue-bg:#eaf2fb;--lbn-blue-ink:#0c447c;font-family:inherit;color:var(--lbn-ink);max-width:1080px;margin:0 auto;padding:8px 0;box-sizing:border-box}
+.lbn-rentbuy{--lbn-ink:#001C39;--lbn-mut:#5A7189;--lbn-line:#e7e5df;--lbn-soft:#f7f6f2;--lbn-blue-bg:#eaf2fb;--lbn-blue-ink:#0c447c;font-family:inherit;color:var(--lbn-ink);max-width:1080px;margin:0 auto;padding:8px 0;box-sizing:border-box}
 .lbn-rentbuy *,.lbn-rentbuy *::before,.lbn-rentbuy *::after{box-sizing:border-box}
 .lbn-tabs{display:inline-flex;background:var(--lbn-soft);border:1px solid var(--lbn-line);border-radius:999px;padding:4px;margin:0 0 22px}
 .lbn-tab{appearance:none;border:0;background:transparent;font:inherit;font-size:15px;line-height:1;color:var(--lbn-mut);padding:10px 28px;border-radius:999px;cursor:pointer;transition:background .15s,color .15s}
@@ -157,7 +157,7 @@
 .lbn-lb-cap{font-size:15px;text-align:center;color:var(--lbn-ink);margin:0}
 .lbn-lb-cap:empty{display:none}
 .lbn-lb-cap small{display:block;font-size:13px;color:var(--lbn-mut);margin-top:3px}
-.lbn-lb-x{position:absolute;top:18px;right:18px;width:40px;height:40px;border:0;border-radius:50%;background:rgba(255,255,255,.92);color:#111;font:inherit;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
+.lbn-lb-x{position:absolute;top:18px;right:18px;width:40px;height:40px;border:0;border-radius:50%;background:rgba(255,255,255,.92);color:var(--lbn-ink);font:inherit;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
 .lbn-lb-x:hover{background:#fff}
 .lbn-lb-x:focus-visible{outline:2px solid #fff;outline-offset:2px}
 /* [feature] Prev/Next arrows. Same circular-button treatment as the close
@@ -203,7 +203,7 @@
 .lbn-callout p+p{margin-top:6px}
 .lbn-callout b{font-weight:600}
 .lbn-list{list-style:none;margin:18px 0 0;padding:0}
-.lbn-list li{position:relative;padding-left:26px;font-size:15px;line-height:1.55;margin-bottom:9px;color:#333}
+.lbn-list li{position:relative;padding-left:26px;font-size:15px;line-height:1.55;margin-bottom:9px;color:var(--lbn-ink)}
 .lbn-list li::before{content:"";position:absolute;left:2px;top:6px;width:13px;height:8px;border-left:2px solid #1d9e75;border-bottom:2px solid #1d9e75;transform:rotate(-45deg)}
 .lbn-fine{font-size:12.5px;line-height:1.6;color:var(--lbn-mut);margin:18px 0 0}
 .lbn-fine strong{font-weight:500;color:var(--lbn-ink)}
@@ -218,21 +218,21 @@
 .lbn-tab{padding:11px 30px;font-size:15px}
 }
 
-.lbnp{--i:#111;--m:#6b6b6b;--l:#e3e3e3;--soft:#f6f6f4;font-family:inherit;color:var(--i);max-width:1080px;margin:0 auto;box-sizing:border-box}
+.lbnp{--i:#001C39;--m:#5A7189;--l:#e7e5df;--soft:#f7f6f2;font-family:inherit;color:var(--i);max-width:1080px;margin:0 auto;box-sizing:border-box}
 .lbnp *,.lbnp *::before,.lbnp *::after{box-sizing:border-box}
 /* Clear anything the theme or PageFly applies to tables, so only our
    horizontal rules remain. Must sit ABOVE the border-bottom rule below. */
 .lbnp-scroll{border:0 !important;border-radius:0 !important;background:none !important;box-shadow:none !important}
 .lbnp table,.lbnp thead,.lbnp tbody,.lbnp tfoot,.lbnp tr,.lbnp th,.lbnp td{border:0 !important;background:none !important;box-shadow:none !important;border-radius:0 !important;margin:0}
 .lbnp-head{margin:0 0 22px}
-.lbnp-head h2{font-size:24px;font-weight:500;margin:0 0 6px}
-.lbnp-head p{font-size:15px;color:var(--m);margin:0;line-height:1.6}
+.lbnp-head h2{font-size:50px !important;font-weight:700;margin:0 0 12px;letter-spacing:-0.01em}
+.lbnp-head p{font-size:18px !important;color:var(--m);margin:0;line-height:1.65}
 /* No overflow container by default — an overflow ancestor becomes the
    scroll context and stops position:sticky from working against the page.
-   [fix] The 769–1023px horizontal-scroll band that used to live here has
+   [fix] The 769–1024px horizontal-scroll band that used to live here has
    been removed: overflow-x:auto turned this into a scroll container and
    silently broke position:sticky for the whole table at those widths.
-   Compact styling now covers that range instead — see the 1023px query
+   Compact styling now covers that range instead — see the 1024px query
    near the bottom of this stylesheet. */
 .lbnp-scroll{overflow:visible}
 .lbnp-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -296,13 +296,23 @@
 .lbnp-foot strong{color:var(--i);font-weight:500}
 .lbnp-foot a{color:var(--i)}
 
-/* [fix] Was max-width:768px. Widened to 1023px to cover the tablet band
+/* [feature] Matches the heading type scale used on why-lubn-lockbox and
+   save-more-than-70: 50/36/24/24 desktop→mobile. This 1200px tier only
+   needs to touch the heading — the table's own compact layout doesn't
+   kick in until the 1024px tier below. */
+@media (max-width:1200px){
+  .lbnp-head h2{font-size:36px !important}
+}
+
+/* [fix] Was max-width:768px, later aligned to max-width:1024px to match
+   the breakpoint used by the other PageFly blocks on this site (why-lubn-
+   lockbox, save-more-than-70). Originally widened to cover the tablet band
    that previously relied on horizontal scroll (see .lbnp-scroll above) —
    that range now gets this compact layout instead, so sticky keeps working
    at every width instead of only below 768px. */
-@media (max-width:1023px){
-  .lbnp-head h2{font-size:21px}
-  .lbnp-head p{font-size:14px}
+@media (max-width:1024px){
+  .lbnp-head h2{font-size:24px !important}
+  .lbnp-head p{font-size:16px !important}
   .lbnp table{min-width:0;width:100%;font-size:11px}
   .lbnp col.f{width:30%}
   .lbnp col.p{width:17.5%}
@@ -324,7 +334,7 @@
   .lbnp-y{width:11px;height:7px}
 }
 
-.lbn-specs-wrap{--lbn-ink:#111;--lbn-mut:#6b6b6b;--lbn-line:#e3e3e3;font-family:inherit;color:var(--lbn-ink);max-width:1080px;margin:0 auto;box-sizing:border-box}
+.lbn-specs-wrap{--lbn-ink:#001C39;--lbn-mut:#5A7189;--lbn-line:#e7e5df;font-family:inherit;color:var(--lbn-ink);max-width:1080px;margin:0 auto;box-sizing:border-box}
 .lbn-specs-wrap *,.lbn-specs-wrap *::before,.lbn-specs-wrap *::after{box-sizing:border-box}
 .lbn-specs{margin:20px 0 0;padding-top:28px}
 .lbn-specs h2{font-size:20px;font-weight:500;margin:0 0 20px}
@@ -337,7 +347,7 @@
 @media (max-width:749px){.lbn-spectable{grid-template-columns:1fr}}
 .lbnp{margin-top:48px}
 .lbn-specs-wrap{margin-top:12px}
-@media (max-width:1023px){.lbnp{margin-top:34px}}
+@media (max-width:1024px){.lbnp{margin-top:34px}}
 </style>
 
 <div class="lbn-rentbuy">
