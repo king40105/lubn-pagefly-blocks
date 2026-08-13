@@ -25,7 +25,9 @@ the history, and `git blame` shows why a given line exists.
 blocks/
   pricing/                 → /pages/pricing  (id="Plans" PMS plan table,
                               Buy/Rent panel, hardware specs, accessory
-                              lightbox with prev/next + swipe)
+                              lightbox with prev/next, swipe, and slide
+                              transitions — main gallery and accessories
+                              navigate as two separate groups)
   why-lubn-lockbox/         → /pages/lockbox  ("Why Lubn Lockbox?" 3-tab
                               comparison table — Connectivity / Access
                               Control / Business Intelligence)
@@ -88,18 +90,3 @@ behaviors only trigger past specific breakpoints (768px, 1024px, 1200px).
 5. Publish in PageFly, then verify on the live page — not just the PageFly
    preview, which doesn't always reflect the same CSS cascade as the
    published page.
-
-## Known open items
-
-- **Theme-level `<body>` overflow**: the theme sets `overflow-x:hidden` on
-  `<body>`, which silently breaks `position:sticky` for anything nested
-  inside it (this is why the pricing table's sticky header needed the
-  workarounds documented in that file). The clean fix is changing the
-  theme's own CSS to `overflow-x:clip` on `<body>` once, site-wide, rather
-  than working around it per-block — not done yet since it touches the
-  theme rather than a PageFly block. See `blocks/pricing/pricing-block.html`
-  for the full history of what was tried here and why it was reverted.
-- These three blocks duplicate the same design tokens (colors, type scale,
-  PageFly-compatibility resets) in each file, per PageFly's single-file
-  constraint. `docs/design-system-audit.md` documents them; if the token
-  values ever change, all three files need updating by hand.
