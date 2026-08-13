@@ -9,7 +9,7 @@ to the actual code; this is the scannable version.
 - **Sticky PMS plan table header**: plan names and prices now stay pinned
   together while scrolling the feature list (previously only the names
   stuck; prices scrolled away).
-- **Sticky broke at tablet widths (769–1023px)**: a horizontal-scroll
+- **Sticky broke at tablet widths (769–1024px)**: a horizontal-scroll
   container in that range silently disabled `position:sticky`. Removed the
   scroll band; that width range now gets the compact mobile-style layout
   instead, so sticky works at every width.
@@ -42,6 +42,28 @@ to the actual code; this is the scannable version.
 - **Nav buttons hidden below 640px** — not enough width for a photo plus
   two 44px circular buttons without overlapping it. Swipe covers mobile
   navigation instead.
+- **Colors, heading type scale, and tablet breakpoint aligned with
+  why-lubn-lockbox/save-more-than-70.** Ink/mut/line/soft tokens updated
+  to the shared palette (`#001C39` / `#5A7189` / `#e7e5df` / `#f7f6f2`)
+  across all three wrapper scopes (`.lbn-rentbuy`, `.lbnp`,
+  `.lbn-specs-wrap`), including two hardcoded colors that weren't using
+  variables. "PMS Data & Showing Suite" now uses the same 50/36/24/24
+  desktop-to-mobile heading scale as the other two blocks. Tablet
+  breakpoint renamed `1023px` → `1024px` to match exactly (was 1px off).
+- **Lightbox: swipe now works anywhere on the screen, not just on the
+  photo**, and switching photos slides (fade + translateX) instead of
+  swapping instantly. Backdrop changed from a dark scrim to a near-white
+  tone so the whole screen reads as one continuous surface — previously
+  the dark backdrop looked inert, so people didn't realize they could
+  swipe there too. Close/Prev/Next buttons restyled for contrast against
+  the lighter backdrop. Added a `justSwiped` guard so a swipe that ends
+  over the backdrop doesn't also register as a tap-to-close.
+- **Lightbox: main gallery and accessories now navigate as two separate
+  groups** instead of one continuous sequence. Opening Key Storage or
+  Wall-mount bracket and hitting Next only cycles between those two —
+  it no longer continues into the hero photo/thumbnails/video. Grouped by
+  DOM position (`.closest('.lbn-acc')`) rather than a new data attribute,
+  so no markup changes were needed.
 
 ## blocks/why-lubn-lockbox/why-lubn-lockbox.html
 
